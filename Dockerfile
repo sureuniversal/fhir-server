@@ -18,9 +18,15 @@ RUN /tmp/apache-maven-3.6.2/bin/mvn clean install -DskipTests
 
 FROM tomcat:9-jre11
 
+COPY server.xml /usr/local/tomcat/conf/server.xml
+COPY cert /usr/local/tomcat/cert
+
 RUN mkdir -p /data/hapi/lucenefiles && chmod 775 /data/hapi/lucenefiles
 COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
 
-EXPOSE 8080
-
+EXPOSE 8443
+#RUN apt-get update
+#RUN apt-get install vim --assume-yes
 CMD ["catalina.sh", "run"]
+#CMD ["ls","/usr/local"]
+#CMD ["vi","/usr/local/server.xml"]
