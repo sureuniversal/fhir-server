@@ -6,9 +6,6 @@ services:
     restart: on-failure
     ports:
       - "8443:8443"
-    volumes:
-      - ./cert:/usr/local/tomcat/cert
-      - ./server.xml:/usr/local/tomcat/conf/server.xml
   hapi-fhir-mysql:
     image: mysql:latest
     container_name: hapi-fhir-mysql
@@ -20,6 +17,5 @@ services:
       MYSQL_ROOT_PASSWORD: 'admin'
     volumes:
       - hapi-fhir-mysql:/var/lib/mysql
-
 volumes:
   hapi-fhir-mysql:
