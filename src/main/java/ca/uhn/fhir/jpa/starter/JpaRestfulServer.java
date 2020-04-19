@@ -34,6 +34,7 @@ import ca.uhn.fhir.rest.server.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
+import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import java.util.HashSet;
@@ -344,6 +345,9 @@ public class JpaRestfulServer extends RestfulServer {
         if (HapiProperties.getBulkExportEnabled()) {
             registerProvider(appCtx.getBean(BulkDataExportProvider.class));
         }
+
+    PatientAndAdminAuthorizationInterceptor patientAndAdminAuthorizationInterceptor = new PatientAndAdminAuthorizationInterceptor();
+        registerInterceptor(patientAndAdminAuthorizationInterceptor);
 
     }
 

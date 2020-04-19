@@ -42,6 +42,14 @@
 	</servlet-mapping>
 
 	<servlet>
+		<servlet-name>TestServlet</servlet-name>
+		<servlet-class>ca.uhn.fhir.jpa.starter.TestServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>TestServlet</servlet-name>
+		<url-pattern>/TestServlet</url-pattern>
+	</servlet-mapping>
+	<servlet>
 		<servlet-name>fhirServlet</servlet-name>
 		<servlet-class>ca.uhn.fhir.jpa.starter.JpaRestfulServer</servlet-class>
 		<load-on-startup>1</load-on-startup>
@@ -50,5 +58,4 @@
 		<servlet-name>fhirServlet</servlet-name>
 		<url-pattern>/fhir/*</url-pattern>
 	</servlet-mapping>
-
 </web-app>
