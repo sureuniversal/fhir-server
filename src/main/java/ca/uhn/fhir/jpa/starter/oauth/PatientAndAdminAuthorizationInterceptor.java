@@ -40,7 +40,11 @@ public class PatientAndAdminAuthorizationInterceptor extends AuthorizationInterc
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-
+  if(theRequestDetails.getOperation().equals("metadata")){
+    return new RuleBuilder()
+      .allowAll()
+      .build();
+  }
     IdType userIdPatientId = null;
     boolean userIsAdmin = false;
     String authHeader = theRequestDetails.getHeader("Authorization");
@@ -51,7 +55,7 @@ public class PatientAndAdminAuthorizationInterceptor extends AuthorizationInterc
     }
     String authToken = authHeader.replace("Bearer ","");
 
-    MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://root:r4SbCgq7Lj5Nqm3@34.244.193.250:27017"));
+    MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://root:r4SbCgq7Lj5Nqm3@mongodb-prod.cluster-c4vki83xjehx.eu-west-1.docdb.amazonaws.com:27017/"));
     MongoDatabase database = mongoClient.getDatabase("users");
     MongoCollection<Document> oAuthAccessTokensCollection = database.getCollection("OAuthAccessToken");
     Document authTokenDocument =  oAuthAccessTokensCollection.find(eq("accessToken",authToken)).first();
