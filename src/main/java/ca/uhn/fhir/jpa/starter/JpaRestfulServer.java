@@ -190,6 +190,8 @@ public class JpaRestfulServer extends RestfulServer {
     loggingInterceptor.setMessageFormat(HapiProperties.getLoggerFormat());
     loggingInterceptor.setErrorMessageFormat(HapiProperties.getLoggerErrorFormat());
     loggingInterceptor.setLogExceptions(HapiProperties.getLoggerLogExceptions());
+    loggingInterceptor.setLogRequestSummary(true);
+    loggingInterceptor.setLogRequestBody(true);
     this.registerInterceptor(loggingInterceptor);
 
     /*
