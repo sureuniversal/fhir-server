@@ -100,8 +100,8 @@
              configuration is used below.
         -->
         <Connector port="8443" protocol="org.apache.coyote.http11.Http11AprProtocol"
-                   maxThreads="150" SSLEnabled="true" >
-            <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+                   maxThreads="300" SSLEnabled="true" >
+            
             <SSLHostConfig>
                 <Certificate certificateKeyFile="cert/privkey.pem"
                              certificateFile="cert/cert.pem"
