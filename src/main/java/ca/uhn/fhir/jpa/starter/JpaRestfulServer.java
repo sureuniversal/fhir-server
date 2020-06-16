@@ -22,6 +22,7 @@ import ca.uhn.fhir.jpa.provider.r4.JpaSystemProviderR4;
 import ca.uhn.fhir.jpa.provider.r5.JpaConformanceProviderR5;
 import ca.uhn.fhir.jpa.provider.r5.JpaSystemProviderR5;
 import ca.uhn.fhir.jpa.search.DatabaseBackedPagingProvider;
+import ca.uhn.fhir.jpa.starter.custom.SmartConfigurationProvider;
 import ca.uhn.fhir.jpa.starter.oauth.PatientAndAdminAuthorizationInterceptor;
 import ca.uhn.fhir.jpa.subscription.SubscriptionInterceptorLoader;
 import ca.uhn.fhir.jpa.subscription.module.interceptor.SubscriptionDebugLogInterceptor;
@@ -130,7 +131,7 @@ public class JpaRestfulServer extends RestfulServer {
     } else if (fhirVersion == FhirVersionEnum.R4) {
       IFhirSystemDao<org.hl7.fhir.r4.model.Bundle, org.hl7.fhir.r4.model.Meta> systemDao = appCtx
           .getBean("mySystemDaoR4", IFhirSystemDao.class);
-      JpaConformanceProviderR4 confProvider = new JpaConformanceProviderR4(this, systemDao,
+      JpaConformanceProviderR4 confProvider = new CustomServerCapabilityStatementProvider(this, systemDao,
           appCtx.getBean(DaoConfig.class));
       confProvider.setImplementationDescription("HAPI FHIR R4 Server");
       setServerConformanceProvider(confProvider);
@@ -340,15 +341,17 @@ public class JpaRestfulServer extends RestfulServer {
       config.setBundleTypesAllowedForStorage(
           Collections.unmodifiableSet(new TreeSet<>(allowedBundleTypes)));
     }
-  
+
         // Bulk Export
         if (HapiProperties.getBulkExportEnabled()) {
             registerProvider(appCtx.getBean(BulkDataExportProvider.class));
         }
 
     PatientAndAdminAuthorizationInterceptor patientAndAdminAuthorizationInterceptor = new PatientAndAdminAuthorizationInterceptor();
-        registerInterceptor(patientAndAdminAuthorizationInterceptor);
+        //registerInterceptor(patientAndAdminAuthorizationInterceptor);
+    registerProvider(new SmartConfigurationProvider());
 
-    }
+
+  }
 
 }

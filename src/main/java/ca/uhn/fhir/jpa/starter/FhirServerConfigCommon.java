@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.repository.init.ResourceReaderRepositoryPopulator;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.thymeleaf.util.Validate;
 
@@ -167,6 +168,10 @@ public class FhirServerConfigCommon {
     retVal.setUsername(HapiProperties.getDataSourceUsername());
     retVal.setPassword(HapiProperties.getDataSourcePassword());
     retVal.setMaxTotal(HapiProperties.getDataSourceMaxPoolSize());
+    ourLog.info("data source url:"+ HapiProperties.getDataSourceUrl());
+    ourLog.info("user name:"+ HapiProperties.getDataSourceUsername());
+    //ourLog.info("password::"+ HapiProperties.getDataSourcePassword());
+
     return retVal;
   }
 

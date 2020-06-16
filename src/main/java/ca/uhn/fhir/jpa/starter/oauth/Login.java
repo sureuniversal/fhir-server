@@ -17,7 +17,6 @@ public class Login extends HttpServlet {
     System.out.println("login");
     PrintWriter out = response.getWriter();
     Person person = new Person();
-
     //Here is where we check and validate username &amp;amp; password. We're going to cheat right now...
     //create a user object. This would ultimately be a FHIR obect I suspect...
   }

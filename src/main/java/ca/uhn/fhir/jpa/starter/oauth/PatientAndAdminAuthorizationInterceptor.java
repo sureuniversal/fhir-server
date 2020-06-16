@@ -40,7 +40,7 @@ public class PatientAndAdminAuthorizationInterceptor extends AuthorizationInterc
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-  if(theRequestDetails.getOperation().equals("metadata")){
+  if( theRequestDetails != null &&  theRequestDetails.getOperation() != null && theRequestDetails.getOperation().equals("metadata")){
     return new RuleBuilder()
       .allowAll()
       .build();
@@ -54,8 +54,9 @@ public class PatientAndAdminAuthorizationInterceptor extends AuthorizationInterc
         .build();
     }
     String authToken = authHeader.replace("Bearer ","");
-
-    MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://root:r4SbCgq7Lj5Nqm3@mongodb-prod.cluster-c4vki83xjehx.eu-west-1.docdb.amazonaws.com:27017/"));
+    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
+    //MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://root:r4SbCgq7Lj5Nqm3@mongodb-prod.cluster-c4vki83xjehx.eu-west-1.docdb.amazonaws.com:27017/"));
+    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
     MongoDatabase database = mongoClient.getDatabase("users");
     MongoCollection<Document> oAuthAccessTokensCollection = database.getCollection("OAuthAccessToken");
     Document authTokenDocument =  oAuthAccessTokensCollection.find(eq("accessToken",authToken)).first();
