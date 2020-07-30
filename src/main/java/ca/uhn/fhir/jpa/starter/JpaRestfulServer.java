@@ -175,6 +175,8 @@ public class JpaRestfulServer extends RestfulServer {
      */
     setPagingProvider(appCtx.getBean(DatabaseBackedPagingProvider.class));
 
+    TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
+    this.registerInterceptor(tokenValidationInterceptor);
     /*
      * This interceptor formats the output using nice colourful
      * HTML output when the request is detected to come from a
