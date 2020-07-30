@@ -23,18 +23,16 @@ public class getUserIdByAccessToken extends HttpServlet {
       out.println("Request is malformed");
       return;
     }
-    Document tokenDocument = Utils.AuthenticateToken(token);
-    if(tokenDocument == null){
+    Document tokenDocument;
+    try {
+      tokenDocument = Utils.AuthenticateToken(token);
+    } catch (Utils.TokenNotFoundException e) {
       response.setStatus(401);
-      out.println("Access Token not found");
+      out.println("Access token not found");
       return;
-    }
-    long expireTime = tokenDocument.getDate("issuedAt").getTime()/1000+ tokenDocument.getInteger("expiresIn");
-    long now = java.time.Instant.now().getEpochSecond();
-    if (expireTime < now)
-    {
+    } catch (Utils.TokenExpiredException e) {
       response.setStatus(401);
-      out.println("Access Token has expired");
+      out.println("Access token has expired");
       return;
     }
     response.setContentType("application/json");
