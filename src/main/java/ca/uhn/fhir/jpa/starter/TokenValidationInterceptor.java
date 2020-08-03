@@ -27,8 +27,11 @@ public class TokenValidationInterceptor {
     }
     //Document tokenDocument;
     ourLog.info("Validating token:\""+token+"\"");
-    Utils.AuthenticateToken(token);
+    try{
+      Utils.AuthenticateToken(token);
+    } catch (Utils.TokenExpiredException ignored) {
 
+    }
   }
   @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
   public boolean TokenHandleException(
