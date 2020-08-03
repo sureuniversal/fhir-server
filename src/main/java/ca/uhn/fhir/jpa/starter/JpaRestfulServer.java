@@ -23,7 +23,7 @@ import ca.uhn.fhir.jpa.provider.r5.JpaConformanceProviderR5;
 import ca.uhn.fhir.jpa.provider.r5.JpaSystemProviderR5;
 import ca.uhn.fhir.jpa.search.DatabaseBackedPagingProvider;
 import ca.uhn.fhir.jpa.starter.custom.SmartConfigurationProvider;
-import ca.uhn.fhir.jpa.starter.oauth.PatientAndAdminAuthorizationInterceptor;
+//import ca.uhn.fhir.jpa.starter.oauth.PatientAndAdminAuthorizationInterceptor;
 import ca.uhn.fhir.jpa.subscription.SubscriptionInterceptorLoader;
 import ca.uhn.fhir.jpa.subscription.module.interceptor.SubscriptionDebugLogInterceptor;
 import ca.uhn.fhir.jpa.util.ResourceProviderFactory;
@@ -351,7 +351,7 @@ public class JpaRestfulServer extends RestfulServer {
             registerProvider(appCtx.getBean(BulkDataExportProvider.class));
         }
 
-    PatientAndAdminAuthorizationInterceptor patientAndAdminAuthorizationInterceptor = new PatientAndAdminAuthorizationInterceptor();
+    //PatientAndAdminAuthorizationInterceptor patientAndAdminAuthorizationInterceptor = new PatientAndAdminAuthorizationInterceptor();
         //registerInterceptor(patientAndAdminAuthorizationInterceptor);
     registerProvider(new SmartConfigurationProvider());
 
