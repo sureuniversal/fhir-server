@@ -21,16 +21,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
     String authHeader = theRequestDetails.getHeader("Authorization");
-    
-    // If the Authorization header is missing just deny entrance try not to use exceptions
-    // new RuleBuilder()
-    // .denyAll()
-    // .build();
     if (authHeader == null){
       throw new AuthenticationException("Missing or invalid Authorization header value");
     }
-    
-    // Get rid of the exception and replace it with a simpler if statement
     String token;
     try {
       token = authHeader.split(" ")[1];
@@ -44,10 +37,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .allowAll()
         .build();
     }else {
-       // Remove the exception and use
-      // new RuleBuilder()
-      // .denyAll()
-      // .build();
       throw new AuthenticationException("Missing or invalid Authorization header value");
     }
   }
