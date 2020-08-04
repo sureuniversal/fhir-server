@@ -15,7 +15,13 @@ import javax.print.Doc;
 import static com.mongodb.client.model.Filters.eq;
 
 public class Utils {
-  //returns a user document
+  private static MongoDatabase usersDB = null;
+  private static void init()
+  {
+    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
+    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
+    usersDB = mongoClient.getDatabase("users");
+  }
   public static class TokenNotFoundException extends Exception{
     public TokenNotFoundException(){
       super("Token not found");
@@ -27,10 +33,10 @@ public class Utils {
     }
   }
   public static org.bson.Document AuthenticateToken(String authToken) throws TokenNotFoundException,TokenExpiredException{
-    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
-    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
-    MongoDatabase database = mongoClient.getDatabase("users");
-    MongoCollection<org.bson.Document> oAuthAccessTokensCollection = database.getCollection("OAuthAccessToken");
+    if(usersDB == null){
+      init();
+    }
+    MongoCollection<org.bson.Document> oAuthAccessTokensCollection = usersDB.getCollection("OAuthAccessToken");
     org.bson.Document authTokenDocument = oAuthAccessTokensCollection.find(eq("accessToken", authToken)).first();
     if(authTokenDocument==null){
       throw new TokenNotFoundException();
@@ -42,46 +48,5 @@ public class Utils {
       throw new TokenExpiredException();
     }
     return authTokenDocument;
-  }
-
-  public static org.bson.Document GetUserByID(String userID) {
-    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
-    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
-    MongoDatabase database = mongoClient.getDatabase("users");
-    MongoCollection<org.bson.Document> usersCollection = database.getCollection("user");
-    return usersCollection.find(eq("_id", userID)).first();
-  }
-
-  public static org.bson.Document GetUserByToken(String authToken) {
-    Document authTokenDocument;
-    try {
-      authTokenDocument = AuthenticateToken(authToken);
-    }
-    catch (Exception e) {
-      return null;
-    }
-    if (authTokenDocument != null) {
-      return GetUserByID(authTokenDocument.getString("uid"));
-    }
-    return null;
-  }
-
-  public static org.bson.Document GetClientByToken(String verificationToken) {
-
-    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
-    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
-    MongoDatabase database = mongoClient.getDatabase("users");
-    MongoCollection<org.bson.Document> oAuthClientApplication = database.getCollection("OAuthClientApplication");
-    org.bson.Document client  =  oAuthClientApplication.find(eq("verificationToken",verificationToken)).first();
-    if(client != null){
-      return client;
-    }
-    return null;
-  }
-
-  public  static org.bson.Document RegisterApp(String clientID){
-    Document application = new Document();
-    application.put("clientID",clientID);
-    return null;
   }
 }
