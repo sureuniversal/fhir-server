@@ -1,49 +1,77 @@
 package ca.uhn.fhir.jpa.starter;
 
-import ca.uhn.fhir.interceptor.api.Hook;
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
+import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
+import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
+import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
+import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
+import org.bson.Document;
+import org.hl7.fhir.r4.model.IdType;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Interceptor
-public class TokenValidationInterceptor {
+public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
   private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(TokenValidationInterceptor.class);
 
-  @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
-  public void TokenValidation(RequestDetails request) throws Utils.TokenExpiredException,Utils.TokenNotFoundException {
-    String authorizationHeader = request.getHeader("authorization");
+  @Override
+  public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
+
+    // Process authorization header - The following is a fake
+    // implementation. Obviously we'd want something more real
+    // for a production scenario.
+    //
+    // In this basic example we have two hardcoded bearer tokens,
+    // one which is for a user that has access to one patient, and
+    // another that has full access.
+    IdType userIdPatientId = null;
+    boolean userIsAdmin = false;
+    Document tokenDoc = null;
+    String authHeader = theRequestDetails.getHeader("Authorization");
+    if (authHeader == null){
+      throw new AuthenticationException("Missing or invalid Authorization header value");
+    }
     String token;
-    if(authorizationHeader != null) {
-      token = authorizationHeader.split(" ")[1];
-    } else {
-      ourLog.info("No authorization header");
-      throw new Utils.TokenNotFoundException();
+    try {
+      token = authHeader.split(" ")[1];
+    } catch (Exception e){
+      throw new AuthenticationException("Missing or invalid Authorization header value");
     }
-    //Document tokenDocument;
-    ourLog.info("Validating token:\""+token+"\"");
-    Utils.AuthenticateToken(token);
-
-  }
-  @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
-  public boolean TokenHandleException(
-    RequestDetails theRequestDetails,
-    BaseServerResponseException theException,
-    HttpServletRequest theServletRequest,
-    HttpServletResponse servletResponse) throws java.io.IOException {
-    Throwable exception = theException.getCause();
-    if(exception instanceof Utils.TokenNotFoundException || exception instanceof Utils.TokenExpiredException){
-      ourLog.error(exception.getMessage());
-      servletResponse.setStatus(401);
-      servletResponse.getWriter().println("Unauthorised:"+exception.getMessage());
-      return false;
+    try {
+      tokenDoc = Utils.AuthenticateToken(token);
+    } catch (Utils.TokenNotFoundException e) {
+      throw new AuthenticationException("Missing or invalid Authorization header value");
+    } catch (Utils.TokenExpiredException ignored) {
+      //throw new AuthenticationException("Token has expired");
     }
-    return true;
-  }
+    userIsAdmin=true;
 
+    // If the user is a specific patient, we create the following rule chain:
+    // Allow the user to read anything in their own patient compartment
+    // Allow the user to write anything in their own patient compartment
+    // If a client request doesn't pass either of the above, deny it
+    if (userIdPatientId != null) {
+      return new RuleBuilder()
+        .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+        .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
+        .denyAll()
+        .build();
+    }
+
+    // If the user is an admin, allow everything
+    if (userIsAdmin) {
+      return new RuleBuilder()
+        .allowAll()
+        .build();
+    }
+
+    // By default, deny everything. This should never get hit, but it's
+    // good to be defensive
+    return new RuleBuilder()
+      .denyAll()
+      .build();
+  }
 }
