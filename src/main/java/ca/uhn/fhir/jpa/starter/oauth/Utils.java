@@ -22,31 +22,15 @@ public class Utils {
     MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
     usersDB = mongoClient.getDatabase("users");
   }
-  public static class TokenNotFoundException extends Exception{
-    public TokenNotFoundException(){
-      super("Token not found");
-    }
-  }
-  public static class TokenExpiredException extends Exception{
-    public TokenExpiredException(){
-      super("Token has expired");
-    }
-  }
-  public static org.bson.Document AuthenticateToken(String authToken) throws TokenNotFoundException,TokenExpiredException{
+  public static org.bson.Document AuthenticateToken(String authToken) {
     if(usersDB == null){
       init();
     }
     MongoCollection<org.bson.Document> oAuthAccessTokensCollection = usersDB.getCollection("OAuthAccessToken");
     org.bson.Document authTokenDocument = oAuthAccessTokensCollection.find(eq("accessToken", authToken)).first();
-    if(authTokenDocument==null){
-      throw new TokenNotFoundException();
-    }
-    long expireTime = authTokenDocument.getDate("issuedAt").getTime()/1000+ authTokenDocument.getInteger("expiresIn");
-    long now = java.time.Instant.now().getEpochSecond();
-    if (expireTime < now)
-    {
-      throw new TokenExpiredException();
-    }
     return authTokenDocument;
+  }
+  public static boolean isTokenValid(String authToken){
+    return AuthenticateToken(authToken)!=null;
   }
 }
