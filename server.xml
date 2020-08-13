@@ -100,8 +100,7 @@
              configuration is used below.
         -->
         <Connector port="8443" protocol="org.apache.coyote.http11.Http11AprProtocol"
-                   maxThreads="300" SSLEnabled="true" >
-            
+                   maxThreads="500" SSLEnabled="true" connectionTimeout="5000" >
             <SSLHostConfig>
                 <Certificate certificateKeyFile="cert/privkey.pem"
                              certificateFile="cert/cert.pem"
