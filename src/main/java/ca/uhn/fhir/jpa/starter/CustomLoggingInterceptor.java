@@ -157,39 +157,78 @@ public class CustomLoggingInterceptor {
        * TODO: this method could be made more efficient through some sort of lookup map
        */
 
-      if ("operationType".equals(theKey)) {
-        if (myRequestDetails.getRestOperationType() != null) {
-          return myRequestDetails.getRestOperationType().getCode();
-        }
-        return "";
-      } else if ("operationName".equals(theKey)) {
-        if (myRequestDetails.getRestOperationType() != null) {
-          switch (myRequestDetails.getRestOperationType()) {
-            case EXTENDED_OPERATION_INSTANCE:
-            case EXTENDED_OPERATION_SERVER:
-            case EXTENDED_OPERATION_TYPE:
-              return myRequestDetails.getOperation();
-            default:
-              return "";
+      switch (theKey){
+        case "operationType":
+          if (myRequestDetails.getRestOperationType() != null) {
+            return myRequestDetails.getRestOperationType().getCode();
           }
+          return "";
+        case "operationName":
+          if (myRequestDetails.getRestOperationType() != null) {
+            switch (myRequestDetails.getRestOperationType()) {
+              case EXTENDED_OPERATION_INSTANCE:
+              case EXTENDED_OPERATION_SERVER:
+              case EXTENDED_OPERATION_TYPE:
+                return myRequestDetails.getOperation();
+              default:
+                return "";
+            }
+          }
+          return "";
+        case "id":
+          if (myRequestDetails.getId() != null) {
+            return myRequestDetails.getId().getValue();
+          }
+          return "";
+        case "servletPath":
+          return StringUtils.defaultString(myRequest.getServletPath());
+        case "idOrResourceName":
+          if (myRequestDetails.getId() != null) {
+            return myRequestDetails.getId().getValue();
+          }
+          if (myRequestDetails.getResourceName() != null) {
+            return myRequestDetails.getResourceName();
+          }
+          return "";
+        case "responseEncodingNoDefault" :{
+          RestfulServerUtils.ResponseEncoding encoding = RestfulServerUtils.determineResponseEncodingNoDefault(myRequestDetails, myRequestDetails.getServer().getDefaultResponseEncoding());
+          if (encoding != null) {
+            return encoding.getEncoding().name();
+          }
+          return "";
         }
-        return "";
-      } else if ("id".equals(theKey)) {
-        if (myRequestDetails.getId() != null) {
-          return myRequestDetails.getId().getValue();
+        case "exceptionMessage":
+          return myException != null ? myException.getMessage() : null;
+        case "requestUrl":
+          return myRequest.getRequestURL().toString();
+        case "requestVerb":
+          return myRequest.getMethod();
+        case "requestBodyFhir": {
+          String contentType = myRequest.getContentType();
+          if (isNotBlank(contentType)) {
+            int colonIndex = contentType.indexOf(';');
+            if (colonIndex != -1) {
+              contentType = contentType.substring(0, colonIndex);
+            }
+            contentType = contentType.trim();
+
+            EncodingEnum encoding = EncodingEnum.forContentType(contentType);
+            if (encoding != null) {
+              byte[] requestContents = myRequestDetails.loadRequestContents();
+              return new String(requestContents, Constants.CHARSET_UTF8);
+            }
+          }
+          return "";
         }
-        return "";
-      } else if ("servletPath".equals(theKey)) {
-        return StringUtils.defaultString(myRequest.getServletPath());
-      } else if ("idOrResourceName".equals(theKey)) {
-        if (myRequestDetails.getId() != null) {
-          return myRequestDetails.getId().getValue();
-        }
-        if (myRequestDetails.getResourceName() != null) {
-          return myRequestDetails.getResourceName();
-        }
-        return "";
-      } else if (theKey.equals("requestParameters")) {
+        case "processingTimeMillis":
+          Date startTime = (Date) myRequest.getAttribute(RestfulServer.REQUEST_START_TIME);
+          if (startTime != null) {
+            long time = System.currentTimeMillis() - startTime.getTime();
+            return Long.toString(time);
+          }
+        case "requestId":
+          return myRequestDetails.getRequestId();
+        case"requestParameters":
         StringBuilder b = new StringBuilder();
         for (Map.Entry<String, String[]> next : myRequestDetails.getParameters().entrySet()) {
           for (String nextValue : next.getValue()) {
@@ -203,51 +242,16 @@ public class CustomLoggingInterceptor {
             b.append(UrlUtil.escapeUrlParam(nextValue));
           }
         }
-        return URLDecoder.decode(b.toString(),Constants.CHARSET_UTF8) ;
-      } else if (theKey.startsWith("requestHeader.")) {
-        String val = myRequest.getHeader(theKey.substring("requestHeader.".length()));
-        return StringUtils.defaultString(val);
-      } else if (theKey.startsWith("remoteAddr")) {
-        return StringUtils.defaultString(myRequest.getRemoteAddr());
-      } else if (theKey.equals("responseEncodingNoDefault")) {
-        RestfulServerUtils.ResponseEncoding encoding = RestfulServerUtils.determineResponseEncodingNoDefault(myRequestDetails, myRequestDetails.getServer().getDefaultResponseEncoding());
-        if (encoding != null) {
-          return encoding.getEncoding().name();
+        return URLDecoder.decode(b.toString(), Constants.CHARSET_UTF8);
+        default:
+        if (theKey.startsWith("requestHeader.")) {
+          String val = myRequest.getHeader(theKey.substring("requestHeader.".length()));
+          return StringUtils.defaultString(val);
+        } else if (theKey.startsWith("remoteAddr")) {
+          return StringUtils.defaultString(myRequest.getRemoteAddr());
         }
-        return "";
-      } else if (theKey.equals("exceptionMessage")) {
-        return myException != null ? myException.getMessage() : null;
-      } else if (theKey.equals("requestUrl")) {
-        return myRequest.getRequestURL().toString();
-      } else if (theKey.equals("requestVerb")) {
-        return myRequest.getMethod();
-      } else if (theKey.equals("requestBodyFhir")) {
-        String contentType = myRequest.getContentType();
-        if (isNotBlank(contentType)) {
-          int colonIndex = contentType.indexOf(';');
-          if (colonIndex != -1) {
-            contentType = contentType.substring(0, colonIndex);
-          }
-          contentType = contentType.trim();
-
-          EncodingEnum encoding = EncodingEnum.forContentType(contentType);
-          if (encoding != null) {
-            byte[] requestContents = myRequestDetails.loadRequestContents();
-            return new String(requestContents, Constants.CHARSET_UTF8);
-          }
-        }
-        return "";
-      } else if ("processingTimeMillis".equals(theKey)) {
-        Date startTime = (Date) myRequest.getAttribute(RestfulServer.REQUEST_START_TIME);
-        if (startTime != null) {
-          long time = System.currentTimeMillis() - startTime.getTime();
-          return Long.toString(time);
-        }
-      } else if ("requestId".equals(theKey)) {
-        return myRequestDetails.getRequestId();
+        return "!VAL!";
       }
-
-      return "!VAL!";
     }
   }
 }
