@@ -23,7 +23,10 @@ public class CustomLoggingInterceptor{
   @Hook(Pointcut.SERVER_PROCESSING_COMPLETED_NORMALLY)
   public void processingCompletedNormally(ServletRequestDetails theRequestDetails){
     HttpServletRequest myRequest = theRequestDetails.getServletRequest();
-    String log = theRequestDetails.getResourceName() + getParams(theRequestDetails) + " "
+    String resourceName = theRequestDetails.getResourceName();
+    if(resourceName == null) resourceName = "";
+    String log = myRequest.getMethod() + " "
+      + resourceName + getParams(theRequestDetails) + " "
       + getBody(theRequestDetails)
       + " headers: authorization=" + myRequest.getHeader("authorization")
       + " IP:" + myRequest.getRemoteAddr();
