@@ -5,21 +5,36 @@ import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
+import ca.uhn.fhir.rest.server.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import ca.uhn.fhir.util.UrlUtil;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.util.Map;
-import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Interceptor
-public class CustomLoggingInterceptor{
+public class CustomLoggingInterceptor extends LoggingInterceptor {
   private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger("");
 
+  CustomLoggingInterceptor(){
+    super();
+  }
+
+  @Override
+  @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
+  public boolean handleException(RequestDetails theRequestDetails, BaseServerResponseException theException, HttpServletRequest theServletRequest, HttpServletResponse theServletResponse) {
+    String log ="ERROR - " + theServletRequest.getMethod() + " "
+      + theServletRequest.getRequestURL().toString();
+    ourLog.error(log);
+    return true;
+  }
+  @Override
   @Hook(Pointcut.SERVER_PROCESSING_COMPLETED_NORMALLY)
   public void processingCompletedNormally(ServletRequestDetails theRequestDetails){
     HttpServletRequest myRequest = theRequestDetails.getServletRequest();
