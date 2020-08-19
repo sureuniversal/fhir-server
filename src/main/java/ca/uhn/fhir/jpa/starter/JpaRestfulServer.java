@@ -197,6 +197,9 @@ public class JpaRestfulServer extends RestfulServer {
     //loggingInterceptor.setLogRequestBody(true);
     this.registerInterceptor(loggingInterceptor);
 
+    CustomLoggingInterceptor customLoggingInterceptor = new CustomLoggingInterceptor();
+    this.registerInterceptor(customLoggingInterceptor);
+
     /*
      * If you are hosting this server at a specific DNS name, the server will try to
      * figure out the FHIR base URL based on what the web container tells it, but
