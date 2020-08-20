@@ -241,6 +241,7 @@ public class CustomLoggingInterceptor {
             }
           }
           return URLDecoder.decode(b.toString(), Constants.CHARSET_UTF8);
+          
         case "requestHeader": return this.lookup(key);
         case "authorization": return this.myRequest.getHeader("authorization");
         default:
