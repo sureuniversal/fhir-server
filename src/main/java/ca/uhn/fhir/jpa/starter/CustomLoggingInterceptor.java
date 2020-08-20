@@ -152,8 +152,8 @@ public class CustomLoggingInterceptor {
 
     @Override
     public String lookup(String theKey) {
-      var searchKey = this.getNextKey(theKey);
-      var key = this.getKeyByFilteringNestedKey(theKey, searchKey);
+      String searchKey = getNextKey(theKey);
+      String key = getKeyByFilteringNestedKey(theKey, searchKey);
 
       switch (searchKey) {
         case "operationType":
@@ -242,8 +242,13 @@ public class CustomLoggingInterceptor {
           }
           return URLDecoder.decode(b.toString(), Constants.CHARSET_UTF8);
           
-        case "requestHeader": return this.lookup(key);
-        case "authorization": return this.myRequest.getHeader("authorization");
+        case "requestHeader":
+          String header = getKeyByFilteringNestedKey(key, searchKey);
+          return myRequest.getHeader(header);
+//        case "authorization":
+//          return this.myRequest.getHeader("authorization");
+        case "remoteAddr":
+          return StringUtils.defaultString(myRequest.getRemoteAddr());
         default:
           return "!VAL!";
       }
@@ -251,14 +256,12 @@ public class CustomLoggingInterceptor {
 
     private String getNextKey(String key)
     {
-      var dotIndex = key.indexOf(".");
+      int dotIndex = key.indexOf(".");
       if (dotIndex == -1)
       {
         return key;
       }
-
-      var nextKey = key.substring(0, dotIndex);
-      return nextKey;
+      return key.substring(0, dotIndex);
     }
 
     private String getKeyByFilteringNestedKey(String key, String nestedKey)
