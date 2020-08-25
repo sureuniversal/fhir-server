@@ -1,4 +1,4 @@
-FROM hapiproject/hapi:latest as build-hapi
+FROM hapiproject/hapi as build-hapi
 ARG HAPI_FHIR_URL=https://github.com/jamesagnew/hapi-fhir/
 ARG HAPI_FHIR_BRANCH=master
 ARG HAPI_FHIR_STARTER_URL=https://github.com/hapifhir/hapi-fhir-jpaserver-starter/
