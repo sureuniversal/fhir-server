@@ -253,6 +253,9 @@ public class HapiProperties {
   }
 
   public static String getServerAddress() {
+    if(System.getenv("SERVER_ADDRESS") != null){
+      return System.getenv("SERVER_ADDRESS");
+    }
     return HapiProperties.getProperty(SERVER_ADDRESS);
   }
 
@@ -293,15 +296,16 @@ public class HapiProperties {
   }
 
   public static String getDataSourceUrl() {
-    return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
+    return System.getenv("FHIR_PG_DATASOURCE_URL");
+    //return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
   }
 
   public static String getDataSourceUsername() {
-    return HapiProperties.getProperty(DATASOURCE_USERNAME);
+    return System.getenv("FHIR_PG_DATASOURCE_USER_NAME");
   }
 
   public static String getDataSourcePassword() {
-    return HapiProperties.getProperty(DATASOURCE_PASSWORD);
+    return System.getenv("FHIR_PG_DATASOURCE_PASSWORD");
   }
 
   public static Boolean getAllowMultipleDelete() {
