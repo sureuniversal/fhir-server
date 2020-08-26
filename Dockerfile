@@ -14,5 +14,5 @@ COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/
 
 COPY server.xml /usr/local/tomcat/conf/server.xml
 COPY cert /usr/local/tomcat/cert
-
+EXPOSE 8443
 CMD ["catalina.sh", "run"]
