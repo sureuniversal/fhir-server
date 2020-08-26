@@ -2,6 +2,7 @@ FROM maven:3.6.3-jdk-11-slim as build-hapi
 WORKDIR /tmp/hapi-fhir-jpaserver-starter
 
 COPY pom.xml .
+
 RUN mvn dependency:go-offline
 
 COPY src/ /tmp/hapi-fhir-jpaserver-starter/src/
@@ -14,5 +15,7 @@ COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/
 
 COPY server.xml /usr/local/tomcat/conf/server.xml
 COPY cert/ /usr/local/tomcat/cert/
+
 EXPOSE 8443
+
 CMD ["catalina.sh", "run"]
