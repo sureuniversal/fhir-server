@@ -11,10 +11,11 @@ RUN mvn clean install -DskipTests
 FROM tomcat:9.0.37-jdk11-openjdk-slim-buster
 
 RUN mkdir -p /data/hapi/lucenefiles && chmod 775 /data/hapi/lucenefiles
-COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
 
 COPY server.xml /usr/local/tomcat/conf/server.xml
 COPY cert/ /usr/local/tomcat/cert/
+
+COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
 
 EXPOSE 8443
 
