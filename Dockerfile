@@ -13,6 +13,6 @@ RUN mkdir -p /data/hapi/lucenefiles && chmod 775 /data/hapi/lucenefiles
 COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
 
 COPY server.xml /usr/local/tomcat/conf/server.xml
-COPY cert /usr/local/tomcat/cert
+COPY cert/ /usr/local/tomcat/cert/
 EXPOSE 8443
 CMD ["catalina.sh", "run"]
