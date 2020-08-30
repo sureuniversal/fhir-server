@@ -17,21 +17,27 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
+    if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains("fhir/metadata")){
+      return new RuleBuilder()
+        .allowAll("metadata")
+        .build();
+    }
+
     String authHeader = theRequestDetails.getHeader("Authorization");
     if (authHeader == null){
       return new RuleBuilder()
-        .denyAll()
+        .denyAll("no header")
         .build();
     }
     String token = authHeader.replace("Bearer ","");
 
     if (Utils.isTokenValid(token)) {
       return new RuleBuilder()
-        .allowAll()
+        .allowAll("valid token")
         .build();
     }else {
       return new RuleBuilder()
-        .denyAll()
+        .denyAll("invalid token")
         .build();
     }
   }
