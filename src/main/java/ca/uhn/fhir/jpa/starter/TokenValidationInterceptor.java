@@ -27,6 +27,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     if (userId != null) {
       var userIdPatient = new IdType("Patient", userId);
       var userIdPractitioner = new IdType("Practitioner", userId);
+      var observationPatient = new IdType("Observation", userId);
 
       return
         new RuleBuilder()
@@ -34,6 +35,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .allow().write().allResources().inCompartment("Patient", userIdPatient).andThen()
           .allow().read().allResources().inCompartment("Practitioner", userIdPractitioner).andThen()
           .allow().write().allResources().inCompartment("Practitioner", userIdPractitioner).andThen()
+          .allow().read().allResources().inCompartment("Observation", observationPatient).andThen()
+          .allow().read().allResources().inCompartment("Observation", userIdPatient).andThen()
           .denyAll()
           .build();
     }else {
