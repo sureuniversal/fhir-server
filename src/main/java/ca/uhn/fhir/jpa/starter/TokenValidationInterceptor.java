@@ -35,9 +35,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .allow().write().allResources().inCompartment("Patient", userIdPatient).andThen()
           .allow().read().allResources().inCompartment("Practitioner", userIdPractitioner).andThen()
           .allow().write().allResources().inCompartment("Practitioner", userIdPractitioner).andThen()
-          .allow().read().allResources().inCompartment("Observation", observationPatient).andThen()
-          .allow().read().allResources().inCompartment("Observation", userIdPatient).andThen()
-          .denyAll()
+          .allowAll()
           .build();
     }else {
       return new RuleBuilder()
