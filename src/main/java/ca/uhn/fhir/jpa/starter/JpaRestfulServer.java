@@ -38,8 +38,14 @@ import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
 import ca.uhn.fhir.validation.IValidatorModule;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
-import java.util.HashSet;
-import java.util.TreeSet;
+
+import java.io.IOException;
+import java.util.*;
+
+import org.apache.http.Header;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.dstu3.model.Meta;
@@ -48,9 +54,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.cors.CorsConfiguration;
 
 import javax.servlet.ServletException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 public class JpaRestfulServer extends RestfulServer {
 
@@ -358,4 +361,16 @@ public class JpaRestfulServer extends RestfulServer {
 
   }
 
+  @Override
+  protected void doGet(javax.servlet.http.HttpServletRequest request, javax.servlet.http.HttpServletResponse response) throws javax.servlet.ServletException, IOException {
+    String authHeader=request.getHeader("Authorization");
+    if(authHeader!=null) {
+      FhirContext ctx = getFhirContext();
+      ArrayList<Header> headers = new ArrayList<>();
+      headers.add(new BasicHeader("Authorization", authHeader));
+      HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
+      ctx.getRestfulClientFactory().setHttpClient(httpClient);
+    }
+    super.doGet(request,response);
+  }
 }
