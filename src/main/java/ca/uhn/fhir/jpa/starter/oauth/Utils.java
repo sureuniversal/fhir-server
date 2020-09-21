@@ -30,21 +30,15 @@ public class Utils {
   }
 
   public static org.bson.Document GetUserByID(String userID) {
-    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
-    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
-    MongoDatabase database = mongoClient.getDatabase("users");
-    MongoCollection<org.bson.Document> usersCollection = database.getCollection("user");
+
+    MongoCollection<org.bson.Document> usersCollection = usersDB.getCollection("user");
     return usersCollection.find(eq("_id", userID)).first();
   }
 
   public static org.bson.Document GetUserByToken(String authToken) {
     Document authTokenDocument;
-    try {
-      authTokenDocument = AuthenticateToken(authToken);
-    }
-    catch (Exception e) {
-      return null;
-    }
+    authTokenDocument = AuthenticateToken(authToken);
+
     if (authTokenDocument != null) {
       return GetUserByID(authTokenDocument.getString("uid"));
     }
@@ -52,11 +46,8 @@ public class Utils {
   }
 
   public static org.bson.Document GetClientByToken(String verificationToken) {
-
-    String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
-    MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
-    MongoDatabase database = mongoClient.getDatabase("users");
-    MongoCollection<org.bson.Document> oAuthClientApplication = database.getCollection("OAuthClientApplication");
+;
+    MongoCollection<org.bson.Document> oAuthClientApplication = usersDB.getCollection("OAuthClientApplication");
     org.bson.Document client  =  oAuthClientApplication.find(eq("verificationToken",verificationToken)).first();
     if(client != null){
       return client;
@@ -72,5 +63,9 @@ public class Utils {
 
   public static boolean isTokenValid(String authToken){
     return AuthenticateToken(authToken)!=null;
+  }
+  public static boolean isPractitioner(String authToken){
+    Document client = GetUserByToken(authToken);
+    return client.getBoolean("isPractitioner");
   }
 }
