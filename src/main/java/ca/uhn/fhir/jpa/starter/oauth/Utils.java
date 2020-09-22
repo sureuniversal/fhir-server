@@ -45,6 +45,7 @@ public class Utils {
     return null;
   }
 
+  // code review: remove this method
   public static org.bson.Document GetClientByToken(String verificationToken) {
 ;
     MongoCollection<org.bson.Document> oAuthClientApplication = usersDB.getCollection("OAuthClientApplication");
@@ -55,15 +56,19 @@ public class Utils {
     return null;
   }
 
+  // code review: remove this method
   public  static org.bson.Document RegisterApp(String clientID){
     Document application = new Document();
     application.put("clientID",clientID);
     return null;
   }
 
+  // code review: remove this method
   public static boolean isTokenValid(String authToken){
     return AuthenticateToken(authToken)!=null;
   }
+
+  // code review: remove this method
   public static boolean isPractitioner(String authToken){
     Document client = GetUserByToken(authToken);
     return client.getBoolean("isPractitioner");
