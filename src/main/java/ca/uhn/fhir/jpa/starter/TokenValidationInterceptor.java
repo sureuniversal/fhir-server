@@ -75,6 +75,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           ruleBuilder.allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
             .allow().write().allResources().inCompartment("Patient", userIdPatientId);
         }
+        IIdType userIdPractitionerId = new IdType("Practitioner",userDoc.getString("_id"));
+        ruleBuilder.allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
+          .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
         return ruleBuilder.denyAll().build();
       } else {
         IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
