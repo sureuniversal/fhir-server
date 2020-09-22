@@ -1,7 +1,6 @@
 package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
@@ -16,16 +15,16 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.bson.Document;
 import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Resource;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
-
-  private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(TokenValidationInterceptor.class);
 
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
@@ -34,7 +33,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
     if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains("fhir/metadata")){
       return new RuleBuilder()
-        .allowAll("metadata")
+        .allow().metadata()
         .build();
     }
 
@@ -77,7 +76,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
             .allow().write().allResources().inCompartment("Patient", userIdPatientId);
         }
         return ruleBuilder.denyAll().build();
-      }else{
+      } else {
         IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
 
         return new RuleBuilder()
@@ -87,7 +86,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .build();
       }
 
-    }else {
+    } else {
       return new RuleBuilder()
         .denyAll("invalid token")
         .build();
