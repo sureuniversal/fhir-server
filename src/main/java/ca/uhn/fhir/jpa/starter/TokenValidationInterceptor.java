@@ -29,12 +29,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-    FhirContext ctx = theRequestDetails.getFhirContext();
 
-    // code review: remove this check
-    if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains("fhir/metadata")){
+    if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
       return new RuleBuilder()
-        .allow().metadata()
+        .allowAll("Port 8080")
         .build();
     }
 
@@ -45,43 +43,28 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
 
-    ArrayList<Header> headers = new ArrayList<>();
-    headers.add(new BasicHeader("Authorization", authHeader));
-
-    // code review: remove this header
-    headers.add(new BasicHeader("inProgress", authHeader));
-
-
-    HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
-    ctx.getRestfulClientFactory().setHttpClient(httpClient);
-
-    // code review: we do not need to create a new client for each request try to create one and use it for all
-    // all the internal requests can be done on the http port :8080 which is closed for the outside world (just open to the cloud)
-    // and so we just check if the call is internal and we allow all
-    IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
-
     String token = authHeader.replace("Bearer ","");
 
     Document userDoc = Utils.GetUserByToken(token);
 
     if (userDoc != null) {
-      // code review: not all records have this field make sure to check the if null condition
-      if(userDoc.getBoolean("isPractitioner"))
+      Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
+      if(isPractitioner == null) isPractitioner = false;
+      if(isPractitioner)
       {
 
-        // code review: remove this check explanation above
-        if(authHeader.equals(theRequestDetails.getHeader("inProgress"))){
-          return new RuleBuilder()
-            .allowAll("validation in progress")
-            .build();
-        }
+        FhirContext ctx = theRequestDetails.getFhirContext();
 
-        // code review: create a new method to get the patients
+        ArrayList<Header> headers = new ArrayList<>();
+        headers.add(new BasicHeader("Authorization", authHeader));
+
+        HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
+        ctx.getRestfulClientFactory().setHttpClient(httpClient);
+        IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
+
         RuleBuilder ruleBuilder = new RuleBuilder();
-        Bundle patientBundle = (Bundle) client.search().forResource(Patient.class)
-          .where(new ReferenceClientParam("general-practitioner")
-          .hasId(userDoc.getString("_id")))
-          .execute();
+        Bundle patientBundle = getPractitionerPatients(client,userDoc.getString("_id"));
+
         for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
           Resource resource = item.getResource();
           IIdType userIdPatientId = new IdType("Patient", resource.getIdElement().getIdPart());
@@ -92,16 +75,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         ruleBuilder.allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
           .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
 
-        // code review: give a name to the rule
-        return ruleBuilder.denyAll().build();
+        return ruleBuilder.denyAll("Practitioner can only access associated patients").build();
       } else {
         IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
 
         return new RuleBuilder()
           .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
           .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
-          // code review: give a name to the rule
-          .denyAll()
+          .denyAll("Patient can only access himself")
           .build();
       }
 
@@ -110,5 +91,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("invalid token")
         .build();
     }
+  }
+
+  Bundle getPractitionerPatients(IGenericClient client, String practitionerId) {
+    return (Bundle) client.search().forResource(Patient.class)
+      .where(new ReferenceClientParam("general-practitioner")
+        .hasId(practitionerId))
+      .execute();
   }
 }
