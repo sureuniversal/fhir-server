@@ -64,12 +64,18 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
         for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
           Resource resource = item.getResource();
+
           IIdType userIdPatientId = new IdType("Patient", resource.getIdElement().getIdPart());
-          ruleBuilder.allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+          ruleBuilder
+            .allow().patch().allRequests().andThen()
+            .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
             .allow().write().allResources().inCompartment("Patient", userIdPatientId);
         }
+
         IIdType userIdPractitionerId = new IdType("Practitioner",userDoc.getString("_id"));
-        ruleBuilder.allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
+        ruleBuilder.allow()
+          .patch().allRequests().andThen()
+          .allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
           .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
 
         return ruleBuilder.denyAll("Practitioner can only access associated patients").build();
@@ -77,6 +83,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
 
         return new RuleBuilder()
+          .allow().patch().allRequests().andThen()
           .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
           .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
           .denyAll("Patient can only access himself")
