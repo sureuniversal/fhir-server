@@ -29,7 +29,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-
     if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
       return new RuleBuilder()
         .allowAll("Port 8080")
@@ -49,10 +48,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
     if (userDoc != null) {
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
-      if(isPractitioner == null) isPractitioner = false;
-      if(isPractitioner)
+      if(isPractitioner != null && isPractitioner)
       {
-
         FhirContext ctx = theRequestDetails.getFhirContext();
 
         ArrayList<Header> headers = new ArrayList<>();
@@ -60,7 +57,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
         HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
         ctx.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
+        IGenericClient client = ctx.newRestfulGenericClient("http://localhost:8080/hapi-fhir-jpaserver/fhir/");
 
         RuleBuilder ruleBuilder = new RuleBuilder();
         Bundle patientBundle = getPractitionerPatients(client,userDoc.getString("_id"));
