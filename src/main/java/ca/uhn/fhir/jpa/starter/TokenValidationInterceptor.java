@@ -96,4 +96,11 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
   }
+
+  Bundle getPractitionerPatients(IGenericClient client, String practitionerId) {
+    return (Bundle) client.search().forResource(Patient.class)
+      .where(new ReferenceClientParam("general-practitioner")
+        .hasId(practitionerId))
+      .execute();
+  }
 }
