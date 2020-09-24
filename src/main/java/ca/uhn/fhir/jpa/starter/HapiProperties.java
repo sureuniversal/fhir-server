@@ -280,6 +280,10 @@ public class HapiProperties {
   }
 
   public static String getLoggerErrorFormat() {
+    if(System.getenv("LOGGER_ERROR_FORMAT") != null){
+      return System.getenv("LOGGER_ERROR_FORMAT");
+    }
+
     return HapiProperties.getProperty(LOGGER_ERROR_FORMAT, "ERROR - ${requestVerb} ${requestUrl}");
   }
 
