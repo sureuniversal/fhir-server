@@ -276,6 +276,10 @@ public class HapiProperties {
   }
 
   public static String getLoggerFormat() {
+    if(System.getenv("LOGGER_FORMAT") != null){
+      return System.getenv("LOGGER_FORMAT");
+    }
+
     return HapiProperties.getProperty(LOGGER_FORMAT, "Path[${servletPath}] Source[${requestHeader.x-forwarded-for}] Operation[${operationType} ${operationName} ${idOrResourceName}] UA[${requestHeader.user-agent}] Params[${requestParameters}] ResponseEncoding[${responseEncodingNoDefault}]");
   }
 
