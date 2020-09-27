@@ -28,76 +28,78 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
-
-    if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
-      return new RuleBuilder()
+    return new RuleBuilder()
         .allowAll("Port 8080")
         .build();
-    }
+//     if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
+//       return new RuleBuilder()
+//         .allowAll("Port 8080")
+//         .build();
+//     }
 
-    String authHeader = theRequestDetails.getHeader("Authorization");
-    if (authHeader == null){
-      return new RuleBuilder()
-        .denyAll("no authorization header")
-        .build();
-    }
+//     String authHeader = theRequestDetails.getHeader("Authorization");
+//     if (authHeader == null){
+//       return new RuleBuilder()
+//         .denyAll("no authorization header")
+//         .build();
+//     }
 
-    String token = authHeader.replace("Bearer ","");
+//     String token = authHeader.replace("Bearer ","");
 
-    Document userDoc = Utils.GetUserByToken(token);
+//     Document userDoc = Utils.GetUserByToken(token);
 
-    if (userDoc != null) {
-      Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
-      if(isPractitioner != null && isPractitioner)
-      {
-        FhirContext ctx = theRequestDetails.getFhirContext();
+//     if (userDoc != null) {
+//       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
+//       if(isPractitioner != null && isPractitioner)
+//       {
+//         FhirContext ctx = theRequestDetails.getFhirContext();
 
-        ArrayList<Header> headers = new ArrayList<>();
-        headers.add(new BasicHeader("Authorization", authHeader));
+//         ArrayList<Header> headers = new ArrayList<>();
+//         headers.add(new BasicHeader("Authorization", authHeader));
 
-        HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
-        ctx.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = ctx.newRestfulGenericClient("http://localhost:8080/hapi-fhir-jpaserver/fhir/");
+//         HttpClient httpClient = HttpClientBuilder.create().setDefaultHeaders(headers).build();
+//         ctx.getRestfulClientFactory().setHttpClient(httpClient);
+//         IGenericClient client = ctx.newRestfulGenericClient("http://localhost:8080/hapi-fhir-jpaserver/fhir/");
 
-        RuleBuilder ruleBuilder = new RuleBuilder();
-        Bundle patientBundle = getPractitionerPatients(client,userDoc.getString("_id"));
+//         RuleBuilder ruleBuilder = new RuleBuilder();
+//         Bundle patientBundle = getPractitionerPatients(client,userDoc.getString("_id"));
 
-        for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
-          Resource resource = item.getResource();
+//         for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
+//           Resource resource = item.getResource();
 
-          IIdType userIdPatientId = new IdType("Patient", resource.getIdElement().getIdPart());
-          ruleBuilder
-            .allow().metadata().andThen()
-            .allow().patch().allRequests().andThen()
-            .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
-            .allow().write().allResources().inCompartment("Patient", userIdPatientId);
-        }
+//           IIdType userIdPatientId = new IdType("Patient", resource.getIdElement().getIdPart());
+//           ruleBuilder
+//             .allow().metadata().andThen()
+//             .allow().patch().allRequests().andThen()
+//             .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+//             .allow().write().allResources().inCompartment("Patient", userIdPatientId);
+//         }
 
-        IIdType userIdPractitionerId = new IdType("Practitioner",userDoc.getString("_id"));
-        ruleBuilder
-          .allow().metadata().andThen()
-          .allow().patch().allRequests().andThen()
-          .allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
-          .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
+//         IIdType userIdPractitionerId = new IdType("Practitioner",userDoc.getString("_id"));
+//         ruleBuilder
+//           .allow().metadata().andThen()
+//           .allow().patch().allRequests().andThen()
+//           .allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
+//           .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
 
-        return ruleBuilder.denyAll("Practitioner can only access associated patients").build();
-      } else {
-        IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
+//         return ruleBuilder.denyAll("Practitioner can only access associated patients").build();
+//       } else {
+//         IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
 
-        return new RuleBuilder()
-          .allow().metadata().andThen()
-          .allow().patch().allRequests().andThen()
-          .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
-          .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
-          .denyAll("Patient can only access himself")
-          .build();
-      }
+//         return new RuleBuilder()
+//           .allow().metadata().andThen()
+//           .allow().patch().allRequests().andThen()
+//           .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+//           .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
+//           .denyAll("Patient can only access himself")
+//           .build();
+//       }
 
-    } else {
-      return new RuleBuilder()
-        .denyAll("invalid token")
-        .build();
-    }
+//     } else {
+//       return new RuleBuilder()
+//         .denyAll("invalid token")
+//         .build();
+//     }
   }
 
   Bundle getPractitionerPatients(IGenericClient client, String practitionerId) {
