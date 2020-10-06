@@ -43,39 +43,26 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     Document userDoc = Utils.GetUserByToken(token);
 
     if (userDoc != null) {
+
+      FhirContext ctx = theRequestDetails.getFhirContext();
+
+      //debug
+      HttpClient httpClient = HttpClientBuilder.create().setConnectionTimeToLive(240, TimeUnit.SECONDS).build();
+      ctx.getRestfulClientFactory().setHttpClient(httpClient);
+
+      IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
+
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
       if(isPractitioner != null && isPractitioner)
       {
-
-        FhirContext ctx = theRequestDetails.getFhirContext();
-
-        //debug
-        HttpClient httpClient = HttpClientBuilder.create().setConnectionTimeToLive(240, TimeUnit.SECONDS).build();
-        ctx.getRestfulClientFactory().setHttpClient(httpClient);
-
-
-        IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
-
-        RuleBuilder ruleBuilder = new RuleBuilder();
-
-        patientRules(ruleBuilder,client,userDoc.getString("_id"),authHeader);
-
-        IIdType userIdPractitionerId = new IdType("Practitioner",userDoc.getString("_id"));
-        ruleBuilder
+        return practitionerRules(new RuleBuilder(),client,userDoc.getString("_id"),authHeader)
           .allow().metadata().andThen()
           .allow().patch().allRequests().andThen()
-          .allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
-          .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
-
-        return ruleBuilder.denyAll("Practitioner can only access associated patients").build();
+          .denyAll("Practitioner can only access associated patients").build();
       } else {
-        IIdType userIdPatientId = new IdType("Patient",userDoc.getString("_id"));
-
-        return new RuleBuilder()
+        return patientRules(new RuleBuilder(),client,userDoc.getString("_id"),authHeader)
           .allow().metadata().andThen()
           .allow().patch().allRequests().andThen()
-          .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
-          .allow().write().allResources().inCompartment("Patient", userIdPatientId).andThen()
           .denyAll("Patient can only access himself")
           .build();
       }
@@ -86,46 +73,54 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
   }
-  private static RuleBuilder patientRules(RuleBuilder ruleBuilder,IGenericClient client,String practitioner,String authHeader){
+  private static RuleBuilder practitionerRules(RuleBuilder ruleBuilder,IGenericClient client,String practitioner,String authHeader){
+    IIdType userIdPractitionerId = new IdType("Practitioner",practitioner);
+
     Bundle patientBundle = (Bundle) client.search().forResource(Patient.class)
-      .where(new ReferenceClientParam("general-practitioner")
-        .hasId(practitioner))
+      .where(new ReferenceClientParam("general-practitioner").hasId(practitioner))
       .withAdditionalHeader("Authorization", authHeader)
       .execute();
 
     for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
       Resource resource = item.getResource();
-      IIdType userIdPatientId = new IdType("Patient", resource.getIdElement().getIdPart());
+      patientRules(ruleBuilder,client,resource.getIdElement().getIdPart(),authHeader);
+    }
+    ruleBuilder
+      .allow().read().allResources().inCompartment("Practitioner", userIdPractitionerId).andThen()
+      .allow().write().allResources().inCompartment("Practitioner", userIdPractitionerId);
+    return ruleBuilder;
+  }
+  private static RuleBuilder patientRules(RuleBuilder ruleBuilder,IGenericClient client,String patient,String authHeader){
+    IIdType userIdPatientId = new IdType("Patient", patient);
 
-      Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
-        .where(new ReferenceClientParam("patient").hasId(resource.getIdElement().getIdPart()))
-        .withAdditionalHeader("Authorization", authHeader)
+    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
+      .where(new ReferenceClientParam("patient").hasId(patient))
+      .withAdditionalHeader("Authorization", authHeader)
+      .prettyPrint()
+      .execute();
+    for (Bundle.BundleEntryComponent item2: deviceBundle.getEntry()){
+      Resource resource2 = item2.getResource();
+      IIdType userIdDeviceId = new IdType("Device", resource2.getIdElement().getIdPart());
+
+      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
+        .where(new ReferenceClientParam("source").hasId(userIdDeviceId))
         .prettyPrint()
         .execute();
-      for (Bundle.BundleEntryComponent item2: deviceBundle.getEntry()){
-        Resource resource2 = item2.getResource();
-        IIdType userIdDeviceId = new IdType("Device", resource2.getIdElement().getIdPart());
-
-        Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-          .where(new ReferenceClientParam("source").hasId(userIdDeviceId))
-          .prettyPrint()
-          .execute();
-        for (Bundle.BundleEntryComponent item3: deviceMetricBundle.getEntry()){
-          Resource resource3 = item3.getResource();
-          IIdType userIdDeviceMetricId = new IdType("DeviceMetric", resource3.getIdElement().getIdPart());
-          ruleBuilder
-            .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
-            .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
-        }
-
+      for (Bundle.BundleEntryComponent item3: deviceMetricBundle.getEntry()){
+        Resource resource3 = item3.getResource();
+        IIdType userIdDeviceMetricId = new IdType("DeviceMetric", resource3.getIdElement().getIdPart());
         ruleBuilder
-          .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
-          .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
+          .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
+          .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
       }
+
       ruleBuilder
-        .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
-        .allow().write().allResources().inCompartment("Patient", userIdPatientId);
+        .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
+        .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
     }
+    ruleBuilder
+      .allow().read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+      .allow().write().allResources().inCompartment("Patient", userIdPatientId);
     return ruleBuilder;
   }
 }
