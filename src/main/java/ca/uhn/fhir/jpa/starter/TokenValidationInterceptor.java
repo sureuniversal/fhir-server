@@ -46,10 +46,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       FhirContext ctx = theRequestDetails.getFhirContext();
 
-      //debug
-      HttpClient httpClient = HttpClientBuilder.create().setConnectionTimeToLive(240, TimeUnit.SECONDS).build();
-      ctx.getRestfulClientFactory().setHttpClient(httpClient);
-
       IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
