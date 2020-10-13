@@ -58,10 +58,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       String bearerId = userDoc.getString("_id");
       FhirContext ctx = theRequestDetails.getFhirContext();
 
-      //debug
-      HttpClient httpClient = HttpClientBuilder.create().build();
-      ctx.getRestfulClientFactory().setHttpClient(httpClient);
-
       IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
@@ -239,20 +235,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
             .denyAll("unknown/unauthorized resource")
             .build();
       }
-//      if(isPractitioner != null && isPractitioner)
-//      {
-//        return practitionerRules(new RuleBuilder(),client,bearerId,authHeader)
-//          .allow().metadata().andThen()
-//          .allow().patch().allRequests().andThen()
-//          .denyAll("Practitioner can only access associated patients").build();
-//      } else {
-//        return patientRules(new RuleBuilder(),client,bearerId,authHeader)
-//          .allow().metadata().andThen()
-//          .allow().patch().allRequests().andThen()
-//          .denyAll("Patient can only access himself")
-//          .build();
-//      }
-
     } else {
       return new RuleBuilder()
         .denyAll("invalid token")
@@ -281,7 +263,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
           .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
       }
-
       ruleBuilder
         .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
         .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
