@@ -242,32 +242,16 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
   }
 
-  public static IAuthRuleBuilder deviceMetricRules(IAuthRuleBuilder ruleBuilder,IGenericClient client,String patient,String authHeader) {
-    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
-      .where(new ReferenceClientParam("patient").hasId(patient))
-      .withAdditionalHeader("Authorization", authHeader)
-      .prettyPrint()
-      .execute();
-    for (Bundle.BundleEntryComponent item2: deviceBundle.getEntry()){
-      Resource resource2 = item2.getResource();
-      IIdType userIdDeviceId = new IdType("Device", resource2.getIdElement().getIdPart());
-
-      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-        .where(new ReferenceClientParam("source").hasId(userIdDeviceId))
-        .prettyPrint()
-        .execute();
-      for (Bundle.BundleEntryComponent item3: deviceMetricBundle.getEntry()){
-        Resource resource3 = item3.getResource();
-        IIdType userIdDeviceMetricId = new IdType("DeviceMetric", resource3.getIdElement().getIdPart());
-        ruleBuilder
-          .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
-          .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
-      }
-      ruleBuilder
-        .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
-        .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
+  private static boolean isQuery(String query){
+    if (query == null)
+      return false;
+    for (String itm :
+      query.split("&")) {
+      if(itm.equals("")) continue;
+      if (itm.charAt(0) != '_')
+        return true;
     }
-    return ruleBuilder;
+    return false;
   }
 
   private static List<String> getPatientsList(IGenericClient client,String practitioner,String authHeader) {
@@ -289,6 +273,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
     return ruleBuilder;
   }
+
   private static IAuthRuleBuilder practitionerRules(IAuthRuleBuilder ruleBuilder,IGenericClient client,String practitioner,String authHeader){
     IIdType userIdPractitionerId = new IdType("Practitioner",practitioner);
 
@@ -317,15 +302,32 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
     return ruleBuilder;
   }
-  private static boolean isQuery(String query){
-    if (query == null)
-      return false;
-    for (String itm :
-      query.split("&")) {
-      if(itm.equals("")) continue;
-      if (itm.charAt(0) != '_')
-        return true;
+
+  public static IAuthRuleBuilder deviceMetricRules(IAuthRuleBuilder ruleBuilder,IGenericClient client,String patient,String authHeader) {
+    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
+      .where(new ReferenceClientParam("patient").hasId(patient))
+      .withAdditionalHeader("Authorization", authHeader)
+      .prettyPrint()
+      .execute();
+    for (Bundle.BundleEntryComponent item2: deviceBundle.getEntry()){
+      Resource resource2 = item2.getResource();
+      IIdType userIdDeviceId = new IdType("Device", resource2.getIdElement().getIdPart());
+
+      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
+        .where(new ReferenceClientParam("source").hasId(userIdDeviceId))
+        .prettyPrint()
+        .execute();
+      for (Bundle.BundleEntryComponent item3: deviceMetricBundle.getEntry()){
+        Resource resource3 = item3.getResource();
+        IIdType userIdDeviceMetricId = new IdType("DeviceMetric", resource3.getIdElement().getIdPart());
+        ruleBuilder
+          .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
+          .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
+      }
+      ruleBuilder
+        .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
+        .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
     }
-    return false;
+    return ruleBuilder;
   }
 }
