@@ -7,6 +7,7 @@ import ca.uhn.fhir.jpa.starter.AuthorizationRules.ObservationRules;
 import ca.uhn.fhir.jpa.starter.AuthorizationRules.PatientRule;
 import ca.uhn.fhir.jpa.starter.AuthorizationRules.RuleBase;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
+import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
@@ -25,6 +26,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
@@ -66,35 +68,41 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
-      if(isPractitioner == null) isPractitioner = false;
-      List<String> patients = isPractitioner ? getPatientsList(client,bearerId,authHeader):new ArrayList<>();
+      if (isPractitioner == null) isPractitioner = false;
+      List<String> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
 
       RuleBase ruleBase = GetRuleBuilder(theRequestDetails);
-      if  (ruleBase == null)
-      {
+      if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
           .build();
       }
 
-      if (isPractitioner)
-      {
+      if (isPractitioner) {
         ruleBase.addResourceIds(patients);
-      }
-      else
-      {
+      } else {
         ruleBase.addResource(bearerId);
       }
 
       List<IAuthRule> rule;
-      String operation = theRequestDetails.getOperation();
-      if (operation.compareTo("Get") == 0)
-      {
-        rule = ruleBase.HandleGet();
-      }
-      else
-      {
-        rule = ruleBase.HandlePost();
+      RequestTypeEnum operation = theRequestDetails.getRequestType();
+      switch (operation){
+        case TRACE:
+        case TRACK:
+        case HEAD:
+        case CONNECT:
+        case OPTIONS:
+        case GET:
+          rule = ruleBase.HandleGet();
+          break;
+        case PUT:
+        case DELETE:
+        case PATCH:
+        case POST:
+          rule = ruleBase.HandlePost();
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + operation);
       }
 
       return rule;
@@ -103,178 +111,179 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
 
 
-      String[] path = myUrl.getPath().substring(myUrl.getPath().indexOf("/fhir/")+"/fhir/".length()).split("/");
-      if(!isQuery(myUrl.getQuery())){ //restful (no query(?…))
-        if(path.length < 2){ //plain (no extra /)
-          switch (path[0]){
-            case "metadata":
-              return new RuleBuilder().allow("metadata").metadata().build();
-            case "PractitionerRole":
-              if(isPractitioner){
-                return new RuleBuilder()
-                  .allow().read().resourcesOfType("Practitioner").inCompartment("Practitioner", new IdType("Practitioner", bearerId)).andThen()
-                  .allow().write().resourcesOfType("Practitioner").inCompartment("Practitioner",new IdType("Practitioner", bearerId)).andThen()
-                  .allow().metadata().andThen()
-                  .allow().patch().allRequests().andThen()
-                  .denyAll("PractitionerRole")
-                  .build();
-              } else {
-                return new RuleBuilder()
-                  .denyAll("not a practitioner")
-                  .build();
-              }
-            default:
-              return new RuleBuilder()
-                .denyAll("unknown/unauthorized resource")
-                .build();
-          }
-        }
-        switch (path[0]){
-          case "Practitioner":
-            String practitionerId = path[1];
-            if (practitionerId.equals(bearerId)){
-              return new RuleBuilder()
-                .allow().read().resourcesOfType("Practitioner").inCompartment("Practitioner", new IdType("Practitioner", practitionerId)).andThen()
-                .allow().write().resourcesOfType("Practitioner").inCompartment("Practitioner",new IdType("Practitioner", practitionerId)).andThen()
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("Practitioner")
-                .build();
-            } else {
-              return new RuleBuilder()
-                .denyAll("not a practitioner")
-                .build();
-            }
-          case "Observation":
-            String observationId = path[1];
-            Observation observation = client.read().resource(Observation.class).withId(observationId).execute();
-            String obsPatientId = observation.getSubject().getReference().replace("Patient/","");
-            if (obsPatientId.equals(bearerId)||patients.contains(obsPatientId)) {
-              return new RuleBuilder()
-                .allow().read().resourcesOfType("Observation").inCompartment("Observation", observation.getIdElement().toUnqualifiedVersionless()).andThen()
-                .allow().write().resourcesOfType("Observation").inCompartment("Observation", observation.getIdElement().toUnqualifiedVersionless()).andThen()
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("Observation")
-                .build();
-            }
-          case "Patient":
-            String patientId = path[1];
-            if (patientId.equals(bearerId)||patients.contains(patientId)){
-              return new RuleBuilder()
-                .allow().read().resourcesOfType("Patient").inCompartment("Patient", new IdType("Patient", patientId)).andThen()
-                .allow().write().resourcesOfType("Patient").inCompartment("Patient",new IdType("Patient", patientId)).andThen()
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("Patient can only access himself")
-                .build();
-            }
-          case "DeviceMetric":
-            String deviceMetricId = path[1];
-            DeviceMetric deviceMetric = client.read().resource(DeviceMetric.class).withId(deviceMetricId).execute();
-            Device metDevice = client.read().resource(Device.class).withId(deviceMetric.getSource().getReference()).execute();
-            String metPatientId = metDevice.getPatient().getReference().replace("Patient/","");
-            if (metPatientId.equals(bearerId)||patients.contains(metPatientId)){
-              return new RuleBuilder()
-                .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", deviceMetric.getIdElement().toUnqualifiedVersionless() ).andThen()
-                .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric",deviceMetric.getIdElement().toUnqualifiedVersionless() ).andThen()
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("DeviceMetric")
-                .build();
-            } else {
-              return new RuleBuilder()
-                .denyAll("DeviceMetric does not belong to patient")
-                .build();
-            }
-          case "Device":
-            String deviceId = path[1];
-            Device device = client.read().resource(Device.class).withId(deviceId).execute();
-            String devPatientId = device.getPatient().getReference().replace("Patient/","");
-            if (devPatientId.equals(bearerId)||patients.contains(devPatientId)){
-              return new RuleBuilder()
-                .allow().read().resourcesOfType("Device").inCompartment("Device", device.getIdElement().toUnqualifiedVersionless() ).andThen()
-                .allow().write().resourcesOfType("Device").inCompartment("Device",device.getIdElement().toUnqualifiedVersionless() ).andThen()
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("Device")
-                .build();
-            } else {
-              return new RuleBuilder()
-                .denyAll("Device does not belong to patient")
-                .build();
-            }
-          default:
-            return new RuleBuilder()
-              .denyAll("unknown/unauthorized resource")
-              .build();
-        }
-      }
-      IAuthRuleBuilder ruleBuilder;
-      switch (path[0]){ //query
-        case "Practitioner":
-        case "Observation":
-        case "Patient":
-        case "PractitionerRole":
-          if(isPractitioner){
-            try {
-              Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-              ruleBuilder = practitionerPatientsRules(patients,patientRulesMethod, new RuleBuilder(),client,authHeader);
-              practitionerRules(ruleBuilder,client,bearerId,authHeader);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-              return new RuleBuilder()
-                .denyAll("Exception:"+ e.getMessage())
-                .build();
-            }
-          } else {
-            ruleBuilder = patientRules(new RuleBuilder(),client,bearerId,authHeader);
-          }
-          return ruleBuilder
-            .allow().metadata().andThen()
-            .allow().patch().allRequests().andThen()
-            .denyAll("Patient can only access himself")
-            .build();
-        case "DeviceMetric":
-          if(isPractitioner){
-            try {
-              Method deviceMetricRulesMethod = this.getClass().getMethod("deviceMetricRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-              ruleBuilder = practitionerPatientsRules(patients,deviceMetricRulesMethod, new RuleBuilder(),client,authHeader);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-              return new RuleBuilder()
-                .denyAll("Exception:"+ e.getMessage())
-                .build();
-            }
-          } else {
-            ruleBuilder = deviceMetricRules(new RuleBuilder(),client,bearerId,authHeader);
-          }
-          return ruleBuilder
-            .allow().metadata().andThen()
-            .allow().patch().allRequests().andThen()
-            .denyAll("DeviceMetric")
-            .build();
-        case "Device":
-          if(isPractitioner){
-            try {
-              Method deviceRulesMethod = this.getClass().getMethod("deviceRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-              ruleBuilder = practitionerPatientsRules(patients,deviceRulesMethod, new RuleBuilder(),client,authHeader);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-              return new RuleBuilder()
-                .denyAll("Exception:"+ e.getMessage())
-                .build();
-            }
-          } else {
-            ruleBuilder = deviceRules(new RuleBuilder(),client,bearerId,authHeader);
-          }
-          return ruleBuilder
-            .allow().metadata().andThen()
-            .allow().patch().allRequests().andThen()
-            .denyAll("Device")
-            .build();
-        default:
-          return new RuleBuilder()
-            .denyAll("unknown/unauthorized resource")
-            .build();
-      }
+
+//      String[] path = myUrl.getPath().substring(myUrl.getPath().indexOf("/fhir/")+"/fhir/".length()).split("/");
+//      if(!isQuery(myUrl.getQuery())){ //restful (no query(?…))
+//        if(path.length < 2){ //plain (no extra /)
+//          switch (path[0]){
+//            case "metadata":
+//              return new RuleBuilder().allow("metadata").metadata().build();
+//            case "PractitionerRole":
+//              if(isPractitioner){
+//                return new RuleBuilder()
+//                  .allow().read().resourcesOfType("Practitioner").inCompartment("Practitioner", new IdType("Practitioner", bearerId)).andThen()
+//                  .allow().write().resourcesOfType("Practitioner").inCompartment("Practitioner",new IdType("Practitioner", bearerId)).andThen()
+//                  .allow().metadata().andThen()
+//                  .allow().patch().allRequests().andThen()
+//                  .denyAll("PractitionerRole")
+//                  .build();
+//              } else {
+//                return new RuleBuilder()
+//                  .denyAll("not a practitioner")
+//                  .build();
+//              }
+//            default:
+//              return new RuleBuilder()
+//                .denyAll("unknown/unauthorized resource")
+//                .build();
+//          }
+//        }
+//        switch (path[0]){
+//          case "Practitioner":
+//            String practitionerId = path[1];
+//            if (practitionerId.equals(bearerId)){
+//              return new RuleBuilder()
+//                .allow().read().resourcesOfType("Practitioner").inCompartment("Practitioner", new IdType("Practitioner", practitionerId)).andThen()
+//                .allow().write().resourcesOfType("Practitioner").inCompartment("Practitioner",new IdType("Practitioner", practitionerId)).andThen()
+//                .allow().metadata().andThen()
+//                .allow().patch().allRequests().andThen()
+//                .denyAll("Practitioner")
+//                .build();
+//            } else {
+//              return new RuleBuilder()
+//                .denyAll("not a practitioner")
+//                .build();
+//            }
+//          case "Observation":
+//            String observationId = path[1];
+//            Observation observation = client.read().resource(Observation.class).withId(observationId).execute();
+//            String obsPatientId = observation.getSubject().getReference().replace("Patient/","");
+//            if (obsPatientId.equals(bearerId)||patients.contains(obsPatientId)) {
+//              return new RuleBuilder()
+//                .allow().read().resourcesOfType("Observation").inCompartment("Observation", observation.getIdElement().toUnqualifiedVersionless()).andThen()
+//                .allow().write().resourcesOfType("Observation").inCompartment("Observation", observation.getIdElement().toUnqualifiedVersionless()).andThen()
+//                .allow().metadata().andThen()
+//                .allow().patch().allRequests().andThen()
+//                .denyAll("Observation")
+//                .build();
+//            }
+//          case "Patient":
+//            String patientId = path[1];
+//            if (patientId.equals(bearerId)||patients.contains(patientId)){
+//              return new RuleBuilder()
+//                .allow().read().resourcesOfType("Patient").inCompartment("Patient", new IdType("Patient", patientId)).andThen()
+//                .allow().write().resourcesOfType("Patient").inCompartment("Patient",new IdType("Patient", patientId)).andThen()
+//                .allow().metadata().andThen()
+//                .allow().patch().allRequests().andThen()
+//                .denyAll("Patient can only access himself")
+//                .build();
+//            }
+//          case "DeviceMetric":
+//            String deviceMetricId = path[1];
+//            DeviceMetric deviceMetric = client.read().resource(DeviceMetric.class).withId(deviceMetricId).execute();
+//            Device metDevice = client.read().resource(Device.class).withId(deviceMetric.getSource().getReference()).execute();
+//            String metPatientId = metDevice.getPatient().getReference().replace("Patient/","");
+//            if (metPatientId.equals(bearerId)||patients.contains(metPatientId)){
+//              return new RuleBuilder()
+//                .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", deviceMetric.getIdElement().toUnqualifiedVersionless() ).andThen()
+//                .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric",deviceMetric.getIdElement().toUnqualifiedVersionless() ).andThen()
+//                .allow().metadata().andThen()
+//                .allow().patch().allRequests().andThen()
+//                .denyAll("DeviceMetric")
+//                .build();
+//            } else {
+//              return new RuleBuilder()
+//                .denyAll("DeviceMetric does not belong to patient")
+//                .build();
+//            }
+//          case "Device":
+//            String deviceId = path[1];
+//            Device device = client.read().resource(Device.class).withId(deviceId).execute();
+//            String devPatientId = device.getPatient().getReference().replace("Patient/","");
+//            if (devPatientId.equals(bearerId)||patients.contains(devPatientId)){
+//              return new RuleBuilder()
+//                .allow().read().resourcesOfType("Device").inCompartment("Device", device.getIdElement().toUnqualifiedVersionless() ).andThen()
+//                .allow().write().resourcesOfType("Device").inCompartment("Device",device.getIdElement().toUnqualifiedVersionless() ).andThen()
+//                .allow().metadata().andThen()
+//                .allow().patch().allRequests().andThen()
+//                .denyAll("Device")
+//                .build();
+//            } else {
+//              return new RuleBuilder()
+//                .denyAll("Device does not belong to patient")
+//                .build();
+//            }
+//          default:
+//            return new RuleBuilder()
+//              .denyAll("unknown/unauthorized resource")
+//              .build();
+//        }
+//      }
+//      IAuthRuleBuilder ruleBuilder;
+//      switch (path[0]){ //query
+//        case "Practitioner":
+//        case "Observation":
+//        case "Patient":
+//        case "PractitionerRole":
+//          if(isPractitioner){
+//            try {
+//              Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
+//              ruleBuilder = practitionerPatientsRules(patients,patientRulesMethod, new RuleBuilder(),client,authHeader);
+//              practitionerRules(ruleBuilder,client,bearerId,authHeader);
+//            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+//              return new RuleBuilder()
+//                .denyAll("Exception:"+ e.getMessage())
+//                .build();
+//            }
+//          } else {
+//            ruleBuilder = patientRules(new RuleBuilder(),client,bearerId,authHeader);
+//          }
+//          return ruleBuilder
+//            .allow().metadata().andThen()
+//            .allow().patch().allRequests().andThen()
+//            .denyAll("Patient can only access himself")
+//            .build();
+//        case "DeviceMetric":
+//          if(isPractitioner){
+//            try {
+//              Method deviceMetricRulesMethod = this.getClass().getMethod("deviceMetricRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
+//              ruleBuilder = practitionerPatientsRules(patients,deviceMetricRulesMethod, new RuleBuilder(),client,authHeader);
+//            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+//              return new RuleBuilder()
+//                .denyAll("Exception:"+ e.getMessage())
+//                .build();
+//            }
+//          } else {
+//            ruleBuilder = deviceMetricRules(new RuleBuilder(),client,bearerId,authHeader);
+//          }
+//          return ruleBuilder
+//            .allow().metadata().andThen()
+//            .allow().patch().allRequests().andThen()
+//            .denyAll("DeviceMetric")
+//            .build();
+//        case "Device":
+//          if(isPractitioner){
+//            try {
+//              Method deviceRulesMethod = this.getClass().getMethod("deviceRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
+//              ruleBuilder = practitionerPatientsRules(patients,deviceRulesMethod, new RuleBuilder(),client,authHeader);
+//            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+//              return new RuleBuilder()
+//                .denyAll("Exception:"+ e.getMessage())
+//                .build();
+//            }
+//          } else {
+//            ruleBuilder = deviceRules(new RuleBuilder(),client,bearerId,authHeader);
+//          }
+//          return ruleBuilder
+//            .allow().metadata().andThen()
+//            .allow().patch().allRequests().andThen()
+//            .denyAll("Device")
+//            .build();
+//        default:
+//          return new RuleBuilder()
+//            .denyAll("unknown/unauthorized resource")
+//            .build();
+//      }
     } else {
       return new RuleBuilder()
         .denyAll("invalid token")
@@ -284,9 +293,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
   private static RuleBase GetRuleBuilder(RequestDetails theRequestDetails)
   {
-    String compartmentName = theRequestDetails.getCompartmentName();
+    String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName)
     {
+      case "Observation":
       case "Patient": return new PatientRule();
       case  "Device": return new DeviceRules();
     }
