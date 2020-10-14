@@ -69,7 +69,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       if(isPractitioner == null) isPractitioner = false;
       List<String> patients = isPractitioner ? getPatientsList(client,bearerId,authHeader):new ArrayList<>();
 
-      var ruleBase = this.GetRuleBuilder(theRequestDetails);
+      RuleBase ruleBase = GetRuleBuilder(theRequestDetails);
       if  (ruleBase == null)
       {
         return new RuleBuilder()
@@ -87,7 +87,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       List<IAuthRule> rule;
-      var operation = theRequestDetails.getOperation();
+      String operation = theRequestDetails.getOperation();
       if (operation.compareTo("Get") == 0)
       {
         rule = ruleBase.HandleGet();
@@ -282,9 +282,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
   }
 
-  private RuleBase GetRuleBuilder(RequestDetails theRequestDetails)
+  private static RuleBase GetRuleBuilder(RequestDetails theRequestDetails)
   {
-    var compartmentName = theRequestDetails.getCompartmentName();
+    String compartmentName = theRequestDetails.getCompartmentName();
     switch (compartmentName)
     {
       case "Patient": return new PatientRule();
