@@ -70,7 +70,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       if(isPractitioner == null) isPractitioner = false;
       List<String> patients = isPractitioner ? getPatientsList(client,bearerId,authHeader):new ArrayList<>();
 
-
       var ruleBase = this.GetRuleBuilder(theRequestDetails);
       if  (ruleBase == null)
       {
