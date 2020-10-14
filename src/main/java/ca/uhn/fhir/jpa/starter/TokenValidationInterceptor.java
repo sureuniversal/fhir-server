@@ -2,6 +2,10 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Interceptor;
+import ca.uhn.fhir.jpa.starter.AuthorizationRules.DeviceRules;
+import ca.uhn.fhir.jpa.starter.AuthorizationRules.ObservationRules;
+import ca.uhn.fhir.jpa.starter.AuthorizationRules.PatientRule;
+import ca.uhn.fhir.jpa.starter.AuthorizationRules.RuleBase;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
@@ -28,6 +32,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
+    // Why do we need this
     URL myUrl;
     try {
       myUrl = new URL(theRequestDetails.getCompleteUrl());
@@ -64,6 +69,41 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
       if(isPractitioner == null) isPractitioner = false;
       List<String> patients = isPractitioner ? getPatientsList(client,bearerId,authHeader):new ArrayList<>();
+
+      var ruleBase = this.GetRuleBuilder(theRequestDetails);
+      if  (ruleBase == null)
+      {
+        return new RuleBuilder()
+          .denyAll("access Denied")
+          .build();
+      }
+
+      if (isPractitioner)
+      {
+        ruleBase.addResourceIds(patients);
+      }
+      else
+      {
+        ruleBase.addResource(bearerId);
+      }
+
+      List<IAuthRule> rule;
+      var operation = theRequestDetails.getOperation();
+      if (operation.compareTo("Get") == 0)
+      {
+        rule = ruleBase.HandleGet();
+      }
+      else
+      {
+        rule = ruleBase.HandlePost();
+      }
+
+      return rule;
+
+
+
+
+
       String[] path = myUrl.getPath().substring(myUrl.getPath().indexOf("/fhir/")+"/fhir/".length()).split("/");
       if(!isQuery(myUrl.getQuery())){ //restful (no query(?…))
         if(path.length < 2){ //plain (no extra /)
@@ -294,6 +334,18 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("invalid token")
         .build();
     }
+  }
+
+  private RuleBase GetRuleBuilder(RequestDetails theRequestDetails)
+  {
+    var compartmentName = theRequestDetails.getCompartmentName();
+    switch (compartmentName)
+    {
+      case "Patient": return new PatientRule();
+      case  "Device": return new DeviceRules();
+    }
+
+    return null;
   }
 
   private static boolean isQuery(String query){
