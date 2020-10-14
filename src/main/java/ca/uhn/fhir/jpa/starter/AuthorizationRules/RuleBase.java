@@ -1,8 +1,6 @@
 package ca.uhn.fhir.jpa.starter.AuthorizationRules;
 
-import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
-import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRuleBuilderRuleOpClassifierFinished;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.dstu2.model.IdType;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -11,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RuleBase {
-  ArrayList<IdType> userIds = new ArrayList();
-  String denyMessage;
+  protected List<IIdType> userIds = new ArrayList<>();
+  protected String denyMessage;
   public RuleBase()
   {
   }
@@ -23,7 +21,7 @@ public abstract class RuleBase {
 
   public void addResource(String id)
   {
-    var idType = this.ToIdType(id);
+    IIdType idType = ToIdType(id);
     userIds.add(idType);
   }
 
@@ -31,7 +29,7 @@ public abstract class RuleBase {
   {
     for (var id : ids)
     {
-      var idType = this.ToIdType(id);
+      IIdType idType = ToIdType(id);
       userIds.add(idType);
     }
   }
@@ -41,15 +39,15 @@ public abstract class RuleBase {
     return new RuleBuilder()
       .allow().patch().allRequests()
       .andThen()
-      .denyAll(this.denyMessage)
+      .denyAll(denyMessage)
       .build();
   }
 
-  public List<IAuthRule> PatchRule() {
+  public static List<IAuthRule> PatchRule() {
     return new RuleBuilder().allow().patch().allRequests().build();
   }
 
-  private IdType ToIdType(String id)
+  private static IIdType ToIdType(String id)
   {
     return new IdType("Patient", id);
   }
