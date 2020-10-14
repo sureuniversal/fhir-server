@@ -2,7 +2,7 @@ package ca.uhn.fhir.jpa.starter.AuthorizationRules;
 
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
-import org.hl7.fhir.dstu2.model.IdType;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.instance.model.api.IIdType;
 
 import java.util.ArrayList;
@@ -21,24 +21,22 @@ public abstract class RuleBase {
 
   public void addResource(String id)
   {
-    IIdType idType = ToIdType(id);
-    userIds.add(idType);
+    userIds.add(ToIdType(id));
   }
 
   public void addResourceIds(List<String> ids)
   {
     for (var id : ids)
     {
-      IIdType idType = ToIdType(id);
-      userIds.add(idType);
+      userIds.add(ToIdType(id));
     }
   }
 
   public List<IAuthRule> DenyRule()
   {
     return new RuleBuilder()
-      .allow().patch().allRequests()
-      .andThen()
+      .allow().metadata().andThen()
+      .allow().patch().allRequests().andThen()
       .denyAll(denyMessage)
       .build();
   }
