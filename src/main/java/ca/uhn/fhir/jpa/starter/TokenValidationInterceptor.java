@@ -65,7 +65,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
-      IAuthRuleBuilder ruleBuilder;
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
       if(isPractitioner == null) isPractitioner = false;
       List<String> patients = isPractitioner ? getPatientsList(client,bearerId,authHeader):new ArrayList<>();
@@ -125,26 +124,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
                   .build();
               }
             default:
-              if(isPractitioner){
-                try {
-                  ruleBuilder = new RuleBuilder();
-                  Method deviceRulesMethod = this.getClass().getMethod("deviceRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-                  practitionerPatientsRules(patients,deviceRulesMethod, ruleBuilder,client,authHeader);
-                  Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-                  practitionerPatientsRules(patients,patientRulesMethod, ruleBuilder,client,authHeader);
-                  practitionerRules(ruleBuilder,client,bearerId,authHeader);
-                } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                  return new RuleBuilder()
-                    .denyAll("Exception:"+ e.getMessage())
-                    .build();
-                }
-              } else {
-                ruleBuilder = deviceMetricRules(new RuleBuilder(),client,bearerId,authHeader);
-              }
-              return ruleBuilder
-                .allow().metadata().andThen()
-                .allow().patch().allRequests().andThen()
-                .denyAll("unknown resource")
+              return new RuleBuilder()
+                .denyAll("unknown/unauthorized resource")
                 .build();
           }
         }
@@ -224,29 +205,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
                 .build();
             }
           default:
-            if(isPractitioner){
-              try {
-                ruleBuilder = new RuleBuilder();
-                Method deviceRulesMethod = this.getClass().getMethod("deviceRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-                practitionerPatientsRules(patients,deviceRulesMethod, ruleBuilder,client,authHeader);
-                Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-                practitionerPatientsRules(patients,patientRulesMethod, ruleBuilder,client,authHeader);
-                practitionerRules(ruleBuilder,client,bearerId,authHeader);
-              } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                return new RuleBuilder()
-                  .denyAll("Exception:"+ e.getMessage())
-                  .build();
-              }
-            } else {
-              ruleBuilder = deviceMetricRules(new RuleBuilder(),client,bearerId,authHeader);
-            }
-            return ruleBuilder
-              .allow().metadata().andThen()
-              .allow().patch().allRequests().andThen()
-              .denyAll("unknown resource")
+            return new RuleBuilder()
+              .denyAll("unknown/unauthorized resource")
               .build();
         }
       }
+      IAuthRuleBuilder ruleBuilder;
       switch (path[0]){ //query
         case "Practitioner":
         case "Observation":
@@ -307,26 +271,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
             .denyAll("Device")
             .build();
         default:
-          if(isPractitioner){
-            try {
-              ruleBuilder = new RuleBuilder();
-              Method deviceRulesMethod = this.getClass().getMethod("deviceRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-              practitionerPatientsRules(patients,deviceRulesMethod, ruleBuilder,client,authHeader);
-              Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
-              practitionerPatientsRules(patients,patientRulesMethod, ruleBuilder,client,authHeader);
-              practitionerRules(ruleBuilder,client,bearerId,authHeader);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-              return new RuleBuilder()
-                .denyAll("Exception:"+ e.getMessage())
-                .build();
-            }
-          } else {
-            ruleBuilder = deviceMetricRules(new RuleBuilder(),client,bearerId,authHeader);
-          }
-          return ruleBuilder
-            .allow().metadata().andThen()
-            .allow().patch().allRequests().andThen()
-            .denyAll("unknown resource")
+          return new RuleBuilder()
+            .denyAll("unknown/unauthorized resource")
             .build();
       }
     } else {
