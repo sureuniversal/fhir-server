@@ -7,19 +7,20 @@ import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Device;
+import org.hl7.fhir.r4.model.DeviceMetric;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeviceRules extends RuleBase {
+public class DeviceMetricRules extends RuleBase {
   {
-    this.denyMessage = "Device not associated with patient";
+    this.denyMessage = "DeviceMetric not associated with patient";
   }
 
-  List<IIdType> deviceIds = new ArrayList<>();
+  List<IIdType> deviceMetricIds = new ArrayList<>();
   IGenericClient client;
 
-  public DeviceRules(IGenericClient client1){
+  public DeviceMetricRules(IGenericClient client1){
     super();
     client=client1;
   }
@@ -33,7 +34,13 @@ public class DeviceRules extends RuleBase {
         .prettyPrint()
         .execute();
       for (var itm: deviceBundle.getEntry()){
-        deviceIds.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
+        Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
+          .where(new ReferenceClientParam("source").hasId(itm.getResource().getIdElement().toUnqualifiedVersionless()))
+          .prettyPrint()
+          .execute();
+        for (var itm2: deviceMetricBundle.getEntry()){
+          deviceMetricIds.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
+        }
       }
     }
   }
@@ -46,7 +53,13 @@ public class DeviceRules extends RuleBase {
       .prettyPrint()
       .execute();
     for (var itm: deviceBundle.getEntry()){
-      deviceIds.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
+      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
+        .where(new ReferenceClientParam("source").hasId(itm.getResource().getIdElement().toUnqualifiedVersionless()))
+        .prettyPrint()
+        .execute();
+      for (var itm2: deviceMetricBundle.getEntry()){
+        deviceMetricIds.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
+      }
     }
   }
 
@@ -54,8 +67,8 @@ public class DeviceRules extends RuleBase {
   public List<IAuthRule> HandleGet() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
-    for (var id : deviceIds) {
-      ruleBuilder.allow().read().allResources().inCompartment("Device", id);
+    for (var id : deviceMetricIds) {
+      ruleBuilder.allow().read().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
     List<IAuthRule> denyRule = DenyRule();
@@ -69,8 +82,8 @@ public class DeviceRules extends RuleBase {
   public List<IAuthRule> HandlePost() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
-    for (var id : deviceIds) {
-      ruleBuilder.allow().write().allResources().inCompartment("Device", id);
+    for (var id : deviceMetricIds) {
+      ruleBuilder.allow().write().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
     List<IAuthRule> patchRule = PatchRule();
