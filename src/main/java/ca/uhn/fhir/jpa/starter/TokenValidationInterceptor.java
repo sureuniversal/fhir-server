@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
@@ -69,7 +68,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
       if (isPractitioner == null) isPractitioner = false;
-      List<String> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
+      List<IIdType> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
 
       RuleBase ruleBase = GetRuleBuilder(theRequestDetails);
       if (ruleBase == null) {
@@ -298,7 +297,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     {
       case "Observation":
       case "Patient": return new PatientRule();
-      case  "Device": return new DeviceRules();
+      case  "DeviceMetric":
+      case  "Device": return new DeviceRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
     }
 
     return null;
@@ -316,14 +316,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     return false;
   }
 
-  private static List<String> getPatientsList(IGenericClient client,String practitioner,String authHeader) {
-    List<String> patients = new ArrayList<>();
+  private static List<IIdType> getPatientsList(IGenericClient client,String practitioner,String authHeader) {
+    List<IIdType> patients = new ArrayList<>();
     Bundle patientBundle = (Bundle) client.search().forResource(Patient.class)
       .where(new ReferenceClientParam("general-practitioner").hasId(practitioner))
       .withAdditionalHeader("Authorization", authHeader)
       .execute();
     for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
-      patients.add(item.getResource().getIdElement().getIdPart());
+      patients.add(item.getResource().getIdElement().toUnqualifiedVersionless());
     }
 
     return patients;
