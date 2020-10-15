@@ -24,12 +24,9 @@ public abstract class RuleBase {
     userIds.add(ToIdType(id));
   }
 
-  public void addResourceIds(List<String> ids)
+  public void addResourceIds(List<IIdType> ids)
   {
-    for (var id : ids)
-    {
-      userIds.add(ToIdType(id));
-    }
+    userIds.addAll(ids);
   }
 
   public List<IAuthRule> DenyRule()
