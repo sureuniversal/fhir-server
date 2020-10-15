@@ -14,7 +14,7 @@ public class PatientRule extends RuleBase {
   @Override
   public List<IAuthRule> HandleGet() {
     List<IAuthRule> ruleList = new ArrayList<>();
-    List<IAuthRule> patientRule = new RuleBuilder().allow().read().resourcesOfType("Patient").inCompartment("Patient", this.userIds).build();
+    List<IAuthRule> patientRule = new RuleBuilder().allow().read().allResources().inCompartment("Patient", this.userIds).build();
     List<IAuthRule> denyRule = DenyRule();
     ruleList.addAll(patientRule);
     ruleList.addAll(denyRule);
@@ -25,7 +25,7 @@ public class PatientRule extends RuleBase {
   @Override
   public List<IAuthRule> HandlePost() {
     List<IAuthRule> ruleList = new ArrayList<>();
-    List<IAuthRule> patientRule = new RuleBuilder().allow().write().resourcesOfType("Patient").inCompartment("Patient", this.userIds).build();
+    List<IAuthRule> patientRule = new RuleBuilder().allow().write().allResources().inCompartment("Patient", this.userIds).build();
     List<IAuthRule> patchRule = PatchRule();
     List<IAuthRule> denyRule = DenyRule();
     ruleList.addAll(patientRule);
