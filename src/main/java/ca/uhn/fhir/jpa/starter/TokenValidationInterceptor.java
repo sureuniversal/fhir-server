@@ -2,10 +2,7 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.jpa.starter.AuthorizationRules.DeviceRules;
-import ca.uhn.fhir.jpa.starter.AuthorizationRules.ObservationRules;
-import ca.uhn.fhir.jpa.starter.AuthorizationRules.PatientRule;
-import ca.uhn.fhir.jpa.starter.AuthorizationRules.RuleBase;
+import ca.uhn.fhir.jpa.starter.AuthorizationRules.*;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
@@ -79,6 +76,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       if (isPractitioner) {
         ruleBase.addResourceIds(patients);
+        ruleBase.addPractitioner(bearerId);
       } else {
         ruleBase.addResource(bearerId);
       }
@@ -220,10 +218,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 //      }
 //      IAuthRuleBuilder ruleBuilder;
 //      switch (path[0]){ //query
+//        case "PractitionerRole":
 //        case "Practitioner":
 //        case "Observation":
 //        case "Patient":
-//        case "PractitionerRole":
 //          if(isPractitioner){
 //            try {
 //              Method patientRulesMethod = this.getClass().getMethod("patientRules",IAuthRuleBuilder.class,IGenericClient.class,String.class,String.class);
@@ -296,9 +294,15 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     switch (compartmentName)
     {
       case "Observation":
-      case "Patient": return new PatientRule();
+      case "Patient":
+        return new PatientRules();
       case  "DeviceMetric":
-      case  "Device": return new DeviceRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
+        return new DeviceMetricRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
+      case  "Device":
+        return new DeviceRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
+      case "PractitionerRole":
+      case "Practitioner":
+        return new PractitionerRules();
     }
 
     return null;
