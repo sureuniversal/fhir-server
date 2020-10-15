@@ -11,6 +11,7 @@ import java.util.List;
 public abstract class RuleBase {
   protected List<IIdType> userIds = new ArrayList<>();
   protected String denyMessage;
+  protected IIdType practitionerId = null;
   public RuleBase()
   {
   }
@@ -21,9 +22,12 @@ public abstract class RuleBase {
 
   public void addResource(String id)
   {
-    userIds.add(ToIdType(id));
+    userIds.add(ToIdType(id,"Patient"));
   }
 
+  public void addPractitioner(String id) {
+    practitionerId = ToIdType(id,"Practitioner");
+  }
   public void addResourceIds(List<IIdType> ids)
   {
     userIds.addAll(ids);
@@ -38,12 +42,13 @@ public abstract class RuleBase {
       .build();
   }
 
-  public static List<IAuthRule> PatchRule() {
+  public List<IAuthRule> PatchRule() {
     return new RuleBuilder().allow().patch().allRequests().build();
   }
 
-  private static IIdType ToIdType(String id)
+  private static IIdType ToIdType(String id,String resourceType)
   {
-    return new IdType("Patient", id);
+    return new IdType(resourceType, id);
   }
+
 }
