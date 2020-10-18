@@ -55,17 +55,29 @@ public class Utils {
     return null;
   }
 
-  public  static org.bson.Document RegisterApp(String clientID){
-    Document application = new Document();
-    application.put("clientID",clientID);
-    return null;
+  public static TokenRecord getTokenRecord(String token){
+    return getTokenRecordMongo(token);
   }
 
-  public static boolean isTokenValid(String authToken){
-    return AuthenticateToken(authToken)!=null;
-  }
-  public static boolean isPractitioner(String authToken){
-    Document client = GetUserByToken(authToken);
-    return client.getBoolean("isPractitioner");
+  public static TokenRecord getTokenRecordMongo(String token){
+    Document authTokenDocument;
+    authTokenDocument = AuthenticateToken(token);
+
+    if (authTokenDocument != null) {
+      Document userDocument = GetUserByID(authTokenDocument.getString("uid"));
+      String userId = userDocument.getString("_id");
+      Boolean isPractitioner = userDocument.getBoolean("isPractitioner");
+      if (isPractitioner == null) isPractitioner = false;
+      long issued = -1;
+      long expire = -1;
+      try {
+        issued = authTokenDocument.getDate("issuedAt").getTime()/1000;
+        expire = authTokenDocument.getInteger("expiresIn");
+      } catch (NullPointerException e) {
+        e.printStackTrace();
+      }
+      return new TokenRecord(userId,token,isPractitioner,issued,expire);
+    }
+    return null;
   }
 }
