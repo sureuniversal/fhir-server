@@ -90,4 +90,30 @@ public class Utils {
     }
     return null;
   }
+
+  public static TokenRecord getTokenRecord(String token){
+    return getTokenRecordMongo(token);
+  }
+
+  public static TokenRecord getTokenRecordMongo(String token){
+    Document authTokenDocument;
+    authTokenDocument = AuthenticateToken(token);
+
+    if (authTokenDocument != null) {
+      Document userDocument = GetUserByID(authTokenDocument.getString("uid"));
+      String userId = userDocument.getString("_id");
+      Boolean isPractitioner = userDocument.getBoolean("isPractitioner");
+      if (isPractitioner == null) isPractitioner = false;
+      long issued = -1;
+      long expire = -1;
+      try {
+        issued = authTokenDocument.getDate("issuedAt").getTime()/1000;
+        expire = authTokenDocument.getInteger("expiresIn");
+      } catch (NullPointerException e) {
+        e.printStackTrace();
+      }
+      return new TokenRecord(userId,token,isPractitioner,issued,expire);
+    }
+    return null;
+  }
 }

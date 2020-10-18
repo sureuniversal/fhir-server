@@ -1,11 +1,19 @@
 package ca.uhn.fhir.jpa.starter.oauth;
 
 public class TokenRecord {
-  final String id;
-  final String token;
-  final boolean is_practitioner;
-  final long issuedDate;
-  final long expiresIn;
+  String id;
+  String token;
+  boolean is_practitioner;
+  long issuedDate;
+  long expiresIn;
+
+  public TokenRecord() {
+    this.id = null;
+    this.token = null;
+    this.is_practitioner = false;
+    this.issuedDate = -1;
+    this.expiresIn = -1;
+  }
 
   public TokenRecord(String id, String token, boolean is_practitioner, long issuedDate, long expiresIn) {
     this.id = id;
@@ -19,19 +27,39 @@ public class TokenRecord {
     return id;
   }
 
+  public void setId(String id) {
+    this.id = id;
+  }
+
   public String getToken() {
     return token;
   }
 
-  public boolean is_practitioner() {
+  public void setToken(String token) {
+    this.token = token;
+  }
+
+  public boolean isIs_practitioner() {
     return is_practitioner;
+  }
+
+  public void setIs_practitioner(boolean is_practitioner) {
+    this.is_practitioner = is_practitioner;
   }
 
   public long getIssuedDate() {
     return issuedDate;
   }
 
+  public void setIssuedDate(long issuedDate) {
+    this.issuedDate = issuedDate;
+  }
+
   public long getExpiresIn() {
     return expiresIn;
+  }
+
+  public void setExpiresIn(long expiresIn) {
+    this.expiresIn = expiresIn;
   }
 }
