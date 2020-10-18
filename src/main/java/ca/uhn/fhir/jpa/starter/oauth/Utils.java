@@ -4,12 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-
-
 import org.bson.Document;
-import org.springframework.web.client.HttpClientErrorException;
-
-import javax.print.Doc;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -41,16 +36,6 @@ public class Utils {
 
     if (authTokenDocument != null) {
       return GetUserByID(authTokenDocument.getString("uid"));
-    }
-    return null;
-  }
-
-  public static org.bson.Document GetClientByToken(String verificationToken) {
-;
-    MongoCollection<org.bson.Document> oAuthClientApplication = usersDB.getCollection("OAuthClientApplication");
-    org.bson.Document client  =  oAuthClientApplication.find(eq("verificationToken",verificationToken)).first();
-    if(client != null){
-      return client;
     }
     return null;
   }
