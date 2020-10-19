@@ -11,10 +11,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
-import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRuleBuilder;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
@@ -129,33 +126,5 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
 
     return patients;
-  }
-
-  public static IAuthRuleBuilder deviceMetricRules(IAuthRuleBuilder ruleBuilder,IGenericClient client,String patient,String authHeader) {
-    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
-      .where(new ReferenceClientParam("patient").hasId(patient))
-      .withAdditionalHeader("Authorization", authHeader)
-      .prettyPrint()
-      .execute();
-    for (Bundle.BundleEntryComponent item2: deviceBundle.getEntry()){
-      Resource resource2 = item2.getResource();
-      IIdType userIdDeviceId = new IdType("Device", resource2.getIdElement().getIdPart());
-
-      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-        .where(new ReferenceClientParam("source").hasId(userIdDeviceId))
-        .prettyPrint()
-        .execute();
-      for (Bundle.BundleEntryComponent item3: deviceMetricBundle.getEntry()){
-        Resource resource3 = item3.getResource();
-        IIdType userIdDeviceMetricId = new IdType("DeviceMetric", resource3.getIdElement().getIdPart());
-        ruleBuilder
-          .allow().read().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId).andThen()
-          .allow().write().resourcesOfType("DeviceMetric").inCompartment("DeviceMetric", userIdDeviceMetricId);
-      }
-      ruleBuilder
-        .allow().read().resourcesOfType("Device").inCompartment("Device", userIdDeviceId).andThen()
-        .allow().write().resourcesOfType("Device").inCompartment("Device", userIdDeviceId);
-    }
-    return ruleBuilder;
   }
 }
