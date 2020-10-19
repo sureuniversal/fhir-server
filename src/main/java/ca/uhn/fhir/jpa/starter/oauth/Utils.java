@@ -12,26 +12,23 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class Utils {
   private static MongoDatabase usersDB = null;
-//  private static Connection postgreCon = null;
-  private static Statement postgreStm = null;
-  private static final boolean isPostgre;
+  private static Statement postgresStm = null;
+  private static final boolean isPostgres;
 
-  static
-  {
-    isPostgre = System.getenv("FHIR_PG_TOKEN_URL") != null;
-    if(!isPostgre) {
+  static {
+    isPostgres = System.getenv("FHIR_PG_TOKEN_URL") != null;
+    if (!isPostgres) {
       String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
       MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
       usersDB = mongoClient.getDatabase("users");
     } else {
       try {
         Class.forName("org.postgresql.Driver");
-        String connectionString =System.getenv("FHIR_PG_TOKEN_URL");
-        String postgreUser =System.getenv("FHIR_PG_TOKEN_USER_NAME");
-        String postgrePass =System.getenv("FHIR_PG_TOKEN_PASSWORD");
-        Connection postgreCon = DriverManager.getConnection(connectionString,postgreUser,postgrePass);
-        //postgreCon.setAutoCommit(false);
-        postgreStm = postgreCon.createStatement();
+        String connectionString = System.getenv("FHIR_PG_TOKEN_URL");
+        String postgresUser = System.getenv("FHIR_PG_TOKEN_USER_NAME");
+        String postgresPass = System.getenv("FHIR_PG_TOKEN_PASSWORD");
+        Connection postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
+        postgresStm = postgresCon.createStatement();
       } catch (SQLException | ClassNotFoundException e) {
         e.printStackTrace();
       }
@@ -51,53 +48,34 @@ public class Utils {
     return usersCollection.find(eq("_id", userID)).first();
   }
 
-  // code-review: remove unneeded methods
-  public static org.bson.Document GetUserByToken(String authToken) {
-    Document authTokenDocument;
-    authTokenDocument = AuthenticateToken(authToken);
-
-    if (authTokenDocument != null) {
-      return GetUserByID(authTokenDocument.getString("uid"));
-    }
-    return null;
+  public static TokenRecord getTokenRecord(String token) {
+    if (isPostgres)
+      return getTokenRecordPostgres(token);
+    else
+      return getTokenRecordMongo(token);
   }
 
-  // code-review: try a method not to use  if(isPostgre) since we dont want it in every method we might implement
-  public static TokenRecord getTokenRecord(String token){
-    if(isPostgre){
-      return getTokenRecordPostgre(token);
-    }
-    return getTokenRecordMongo(token);
-  }
-
-  // code-review: both getTokenRecordPostgre and getTokenRecordMongo share 90% of the logic try to rewrite them using as less code duplication as possible
-  private static TokenRecord getTokenRecordPostgre(String token){
+    private static TokenRecord getTokenRecordPostgres(String token) {
     try {
-      // code-review: why are you using CROSS JOIN use JOIN instead
-      // also try to make the query more readable in the code
-      ResultSet resultSet = postgreStm.executeQuery("select u.\"id\", u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin from \"public\".oauthaccesstoken o,\"public\".user u where o.uid = u.\"id\"and o.accesstoken = '"+token+"';");
-      if(!resultSet.next()) return null;
+      ResultSet resultSet = postgresStm.executeQuery(
+        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin " +
+          "from public.oauthaccesstoken o " +
+          "join public.user u on o.uid = u.id " +
+          "where o.accesstoken = '" + token + "';");
+      if (!resultSet.next()) return null;
       String userId = resultSet.getString("id");
       boolean isPractitioner = resultSet.getBoolean("ispractitioner");
       long issued = -1;
       long expire = -1;
-
-      // code-review: no need for try catch just do a simple if condition to decide and also you are not throwing in the catch so no matter what the result you will go to the return statement
-      try {
-        issued = resultSet.getDate("issuedat").getTime()/1000;
-        expire = resultSet.getLong("expiresin");
-      } catch (SQLException e) {
-        e.printStackTrace();
-      }
-      return new TokenRecord(userId,token,isPractitioner,issued,expire);
+      return new TokenRecord(userId, token, isPractitioner, issued, expire);
     } catch (SQLException e) {
       org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(Utils.class);
-      ourLog.error("postgreSQL error:",e);
+      ourLog.error("postgreSQL error:", e);
       return null;
     }
   }
 
-  private static TokenRecord getTokenRecordMongo(String token){
+  private static TokenRecord getTokenRecordMongo(String token) {
     Document authTokenDocument;
     authTokenDocument = AuthenticateToken(token);
 
@@ -108,15 +86,7 @@ public class Utils {
       if (isPractitioner == null) isPractitioner = false;
       long issued = -1;
       long expire = -1;
-
-      // code-review: no need for try catch just do a simple if condition to decide and also you are not throwing in the catch so no matter what the result you will go to the return statement
-      try {
-        issued = authTokenDocument.getDate("issuedAt").getTime()/1000;
-        expire = authTokenDocument.getInteger("expiresIn");
-      } catch (NullPointerException e) {
-        e.printStackTrace();
-      }
-      return new TokenRecord(userId,token,isPractitioner,issued,expire);
+      return new TokenRecord(userId, token, isPractitioner, issued, expire);
     }
     return null;
   }
