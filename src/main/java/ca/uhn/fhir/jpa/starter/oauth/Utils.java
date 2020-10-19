@@ -18,18 +18,21 @@ public class Utils {
 
   static
   {
-    isPostgre = System.getenv("FHIR_PG_TOKEN_URL") == null;
-    if(isPostgre) {
+    isPostgre = System.getenv("FHIR_PG_TOKEN_URL") != null;
+    if(!isPostgre) {
       String connectionString = System.getenv("FHIR_MONGO_DATASOURCE_URL");
       MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
       usersDB = mongoClient.getDatabase("users");
     } else {
       try {
+        Class.forName("org.postgresql.Driver");
         String connectionString =System.getenv("FHIR_PG_TOKEN_URL");
-        Connection postgreCon = DriverManager.getConnection(connectionString);
-        postgreCon.setAutoCommit(false);
+        String postgreUser =System.getenv("FHIR_PG_TOKEN_USER_NAME");
+        String postgrePass =System.getenv("FHIR_PG_TOKEN_PASSWORD");
+        Connection postgreCon = DriverManager.getConnection(connectionString,postgreUser,postgrePass);
+        //postgreCon.setAutoCommit(false);
         postgreStm = postgreCon.createStatement();
-      } catch (SQLException e) {
+      } catch (SQLException | ClassNotFoundException e) {
         e.printStackTrace();
       }
     }
@@ -65,11 +68,10 @@ public class Utils {
     return getTokenRecordMongo(token);
   }
 
-  public static TokenRecord getTokenRecordPostgre(String token){
+  private static TokenRecord getTokenRecordPostgre(String token){
     try {
-      ResultSet resultSet = postgreStm.executeQuery("select u.\"id\", u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin"+
-        "from \"public\".oauthaccesstoken o,\"public\".user u "+
-        "where o.uid = u.\"id\" and o.accesstoken = '"+token+"';");
+      ResultSet resultSet = postgreStm.executeQuery("select u.\"id\", u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin from \"public\".oauthaccesstoken o,\"public\".user u where o.uid = u.\"id\"and o.accesstoken = '"+token+"';");
+      if(!resultSet.next()) return null;
       String userId = resultSet.getString("id");
       boolean isPractitioner = resultSet.getBoolean("ispractitioner");
       long issued = -1;
@@ -88,7 +90,7 @@ public class Utils {
     }
   }
 
-  public static TokenRecord getTokenRecordMongo(String token){
+  private static TokenRecord getTokenRecordMongo(String token){
     Document authTokenDocument;
     authTokenDocument = AuthenticateToken(token);
 
