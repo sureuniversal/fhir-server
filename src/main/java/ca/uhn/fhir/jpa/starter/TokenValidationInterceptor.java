@@ -3,6 +3,7 @@ package ca.uhn.fhir.jpa.starter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.jpa.starter.AuthorizationRules.*;
+import ca.uhn.fhir.jpa.starter.oauth.TokenRecord;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
@@ -14,7 +15,6 @@ import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRuleBuilder;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.bson.Document;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
@@ -42,16 +42,15 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
     String token = authHeader.replace("Bearer ","");
 
-    Document userDoc = Utils.GetUserByToken(token);
+    TokenRecord tokenRecord = Utils.getTokenRecord(token);
 
-    if (userDoc != null) {
-      String bearerId = userDoc.getString("_id");
+    if (tokenRecord != null) {
+      String bearerId = tokenRecord.getId();
       FhirContext ctx = theRequestDetails.getFhirContext();
 
       IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
-      Boolean isPractitioner = userDoc.getBoolean("isPractitioner");
-      if (isPractitioner == null) isPractitioner = false;
+      boolean isPractitioner = tokenRecord.is_practitioner();
       List<IIdType> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
 
       RuleBase ruleBase = GetRuleBuilder(theRequestDetails);

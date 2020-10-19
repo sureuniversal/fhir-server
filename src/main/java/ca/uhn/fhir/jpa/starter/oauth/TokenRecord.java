@@ -39,11 +39,11 @@ public class TokenRecord {
     this.token = token;
   }
 
-  public boolean isIs_practitioner() {
+  public boolean is_practitioner() {
     return is_practitioner;
   }
 
-  public void setIs_practitioner(boolean is_practitioner) {
+  public void setPractitioner(boolean is_practitioner) {
     this.is_practitioner = is_practitioner;
   }
 
