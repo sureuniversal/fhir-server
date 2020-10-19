@@ -73,6 +73,8 @@ public class Utils {
   // code-review: both getTokenRecordPostgre and getTokenRecordMongo share 90% of the logic try to rewrite them using as less code duplication as possible
   private static TokenRecord getTokenRecordPostgre(String token){
     try {
+      // code-review: why are you using CROSS JOIN use JOIN instead
+      // also try to make the query more readable in the code 
       ResultSet resultSet = postgreStm.executeQuery("select u.\"id\", u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin from \"public\".oauthaccesstoken o,\"public\".user u where o.uid = u.\"id\"and o.accesstoken = '"+token+"';");
       if(!resultSet.next()) return null;
       String userId = resultSet.getString("id");
