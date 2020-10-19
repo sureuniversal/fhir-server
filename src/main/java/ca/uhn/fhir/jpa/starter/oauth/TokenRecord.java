@@ -1,5 +1,5 @@
 package ca.uhn.fhir.jpa.starter.oauth;
-
+// code-review: remove unused methods
 public class TokenRecord {
   String id;
   String token;
