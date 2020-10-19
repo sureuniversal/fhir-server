@@ -51,6 +51,7 @@ public class Utils {
     return usersCollection.find(eq("_id", userID)).first();
   }
 
+  // code-review: remove unneeded methods
   public static org.bson.Document GetUserByToken(String authToken) {
     Document authTokenDocument;
     authTokenDocument = AuthenticateToken(authToken);
@@ -61,6 +62,7 @@ public class Utils {
     return null;
   }
 
+  // code-review: try a method not to use  if(isPostgre) since we dont want it in every method we might implement
   public static TokenRecord getTokenRecord(String token){
     if(isPostgre){
       return getTokenRecordPostgre(token);
@@ -68,6 +70,7 @@ public class Utils {
     return getTokenRecordMongo(token);
   }
 
+  // code-review: both getTokenRecordPostgre and getTokenRecordMongo share 90% of the logic try to rewrite them using as less code duplication as possible
   private static TokenRecord getTokenRecordPostgre(String token){
     try {
       ResultSet resultSet = postgreStm.executeQuery("select u.\"id\", u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin from \"public\".oauthaccesstoken o,\"public\".user u where o.uid = u.\"id\"and o.accesstoken = '"+token+"';");
@@ -76,6 +79,8 @@ public class Utils {
       boolean isPractitioner = resultSet.getBoolean("ispractitioner");
       long issued = -1;
       long expire = -1;
+
+      // code-review: no need for try catch just do a simple if condition to decide and also you are not throwing in the catch so no matter what the result you will go to the return statement
       try {
         issued = resultSet.getDate("issuedat").getTime()/1000;
         expire = resultSet.getLong("expiresin");
@@ -101,6 +106,8 @@ public class Utils {
       if (isPractitioner == null) isPractitioner = false;
       long issued = -1;
       long expire = -1;
+
+      // code-review: no need for try catch just do a simple if condition to decide and also you are not throwing in the catch so no matter what the result you will go to the return statement
       try {
         issued = authTokenDocument.getDate("issuedAt").getTime()/1000;
         expire = authTokenDocument.getInteger("expiresIn");
