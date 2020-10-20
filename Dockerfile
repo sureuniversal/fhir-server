@@ -20,5 +20,4 @@ ADD /cert/ /
 
 COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
 
-EXPOSE 8443
 CMD ["catalina.sh", "run"]
