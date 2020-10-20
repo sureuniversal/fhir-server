@@ -6,8 +6,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-import java.sql.*;
-
 import static com.mongodb.client.model.Filters.eq;
 
 public class Utils {
