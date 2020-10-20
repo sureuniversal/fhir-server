@@ -50,7 +50,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       boolean isPractitioner = tokenRecord.is_practitioner();
       List<IIdType> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
 
-      RuleBase ruleBase = GetRuleBuilder(theRequestDetails);
+      RuleBase ruleBase = RuleBase.rulesFactory(theRequestDetails);
       if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
@@ -92,27 +92,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("invalid token")
         .build();
     }
-  }
-
-  private static RuleBase GetRuleBuilder(RequestDetails theRequestDetails)
-  {
-    String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    switch (compartmentName)
-    {
-      case "Observation":
-      case "Patient":
-        return new PatientRules();
-      case  "DeviceMetric":
-        return new DeviceMetricRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
-      case  "Device":
-        return new DeviceRules(theRequestDetails.getFhirContext().newRestfulGenericClient(theRequestDetails.getFhirServerBase()));
-      case "metadata":
-      case "PractitionerRole":
-      case "Practitioner":
-        return new GeneralRules();
-    }
-
-    return null;
   }
 
   private static List<IIdType> getPatientsList(IGenericClient client,String practitioner,String authHeader) {
