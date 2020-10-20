@@ -2,7 +2,7 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.jpa.starter.AuthorizationRules.*;
+import ca.uhn.fhir.jpa.starter.authorization.rules.*;
 import ca.uhn.fhir.jpa.starter.oauth.TokenRecord;
 import ca.uhn.fhir.jpa.starter.oauth.Utils;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
@@ -73,13 +73,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         case CONNECT:
         case OPTIONS:
         case GET:
-          rule = ruleBase.HandleGet();
+          rule = ruleBase.handleGet();
           break;
         case PUT:
         case DELETE:
         case PATCH:
         case POST:
-          rule = ruleBase.HandlePost();
+          rule = ruleBase.handlePost();
           break;
         default:
           throw new IllegalStateException("Unexpected value: " + operation);
@@ -109,7 +109,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       case "metadata":
       case "PractitionerRole":
       case "Practitioner":
-        return new PractitionerRules();
+        return new GeneralRules();
     }
 
     return null;
