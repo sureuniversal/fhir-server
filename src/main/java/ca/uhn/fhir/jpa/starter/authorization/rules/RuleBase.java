@@ -1,4 +1,4 @@
-package ca.uhn.fhir.jpa.starter.AuthorizationRules;
+package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
@@ -16,37 +16,39 @@ public abstract class RuleBase {
   {
   }
 
-  public abstract List<IAuthRule> HandleGet();
+  public abstract List<IAuthRule> handleGet();
 
-  public abstract List<IAuthRule> HandlePost();
+  public abstract List<IAuthRule> handlePost();
 
   public void addResource(String id)
   {
-    userIds.add(ToIdType(id,"Patient"));
+    userIds.add(toIdType(id,"Patient"));
   }
 
   public void addPractitioner(String id) {
-    practitionerId = ToIdType(id,"Practitioner");
+    practitionerId = toIdType(id,"Practitioner");
   }
   public void addResourceIds(List<IIdType> ids)
   {
     userIds.addAll(ids);
   }
 
-  public List<IAuthRule> DenyRule()
+  public List<IAuthRule> commonRules()
   {
     return new RuleBuilder()
       .allow().metadata().andThen()
-      .allow().patch().allRequests().andThen()
+      .allow().patch().allRequests()
+      .build();
+  }
+
+  public List<IAuthRule> denyRule()
+  {
+    return new RuleBuilder()
       .denyAll(denyMessage)
       .build();
   }
 
-  public List<IAuthRule> PatchRule() {
-    return new RuleBuilder().allow().patch().allRequests().build();
-  }
-
-  private static IIdType ToIdType(String id,String resourceType)
+  private static IIdType toIdType(String id, String resourceType)
   {
     return new IdType(resourceType, id);
   }
