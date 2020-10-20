@@ -1,4 +1,4 @@
-package ca.uhn.fhir.jpa.starter.AuthorizationRules;
+package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
@@ -13,15 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DeviceMetricRules extends RuleBase {
-  {
-    this.denyMessage = "DeviceMetric not associated with patient";
-  }
 
   List<IIdType> deviceMetricIds = new ArrayList<>();
   IGenericClient client;
 
   public DeviceMetricRules(IGenericClient client1){
     super();
+    this.denyMessage = "DeviceMetric not associated with patient";
     client=client1;
   }
 
@@ -64,32 +62,34 @@ public class DeviceMetricRules extends RuleBase {
   }
 
   @Override
-  public List<IAuthRule> HandleGet() {
+  public List<IAuthRule> handleGet() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : deviceMetricIds) {
       ruleBuilder.allow().read().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> denyRule = DenyRule();
+    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> denyRule = denyRule();
     ruleList.addAll(deviceRule);
+    ruleList.addAll(commonRules);
     ruleList.addAll(denyRule);
 
     return ruleList;
   }
 
   @Override
-  public List<IAuthRule> HandlePost() {
+  public List<IAuthRule> handlePost() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : deviceMetricIds) {
       ruleBuilder.allow().write().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> patchRule = PatchRule();
-    List<IAuthRule> denyRule = DenyRule();
+    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> denyRule = denyRule();
     ruleList.addAll(deviceRule);
-    ruleList.addAll(patchRule);
+    ruleList.addAll(commonRules);
     ruleList.addAll(denyRule);
 
     return ruleList;
