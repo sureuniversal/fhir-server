@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
+import org.hl7.fhir.instance.model.api.IIdType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,10 @@ public class GeneralRules extends RuleBase {
 
   public GeneralRules() {
     denyMessage = "Only general rules allowed";
+  }
+
+  @Override
+  public void addResourceIds(List<IIdType> ids) {
   }
 
   @Override
