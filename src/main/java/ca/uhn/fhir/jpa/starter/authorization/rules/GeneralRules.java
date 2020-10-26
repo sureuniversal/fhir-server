@@ -31,7 +31,7 @@ public class GeneralRules extends RuleBase {
     List<IAuthRule> ruleList = new ArrayList<>();
     List<IAuthRule> commonRules = commonRules();
     List<IAuthRule> denyRule = denyRule();
-    if(practitionerId != null){
+    if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
       ruleList.addAll(practitionerRule);
     }
@@ -46,7 +46,7 @@ public class GeneralRules extends RuleBase {
     List<IAuthRule> ruleList = new ArrayList<>();
     List<IAuthRule> commonRules = commonRules();
     List<IAuthRule> denyRule = denyRule();
-    if(practitionerId != null){
+    if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();
       ruleList.addAll(practitionerRule);
     }
