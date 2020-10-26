@@ -12,26 +12,26 @@ public class DeviceMetricRules extends RuleBase {
 
   List<IIdType> deviceMetricIds = new ArrayList<>();
 
-  public DeviceMetricRules(String auth){
+  public DeviceMetricRules(String auth) {
     super(auth);
     this.denyMessage = "DeviceMetric not associated with patient";
   }
 
   @Override
   public void addResourceIds(List<IIdType> ids) {
-    deviceMetricIds.addAll(Search.getDeviceMetrics(ids,authHeader));
+    deviceMetricIds.addAll(Search.getDeviceMetrics(ids, authHeader));
   }
 
   @Override
   public void addResource(String id) {
-    deviceMetricIds.addAll(Search.getDeviceMetrics(id,authHeader));
+    deviceMetricIds.addAll(Search.getDeviceMetrics(id, authHeader));
   }
 
   @Override
   public void addResourcesByPractitioner(String id) {
     addPractitioner(id);
-    List<IIdType> ids = Search.getPatients(id,authHeader);
-    deviceMetricIds.addAll(Search.getDeviceMetrics(ids,authHeader));
+    List<IIdType> ids = Search.getPatients(id, authHeader);
+    deviceMetricIds.addAll(Search.getDeviceMetrics(ids, authHeader));
   }
 
   @Override

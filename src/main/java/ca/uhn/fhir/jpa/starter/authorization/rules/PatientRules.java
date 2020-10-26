@@ -16,20 +16,18 @@ public class PatientRules extends RuleBase {
     this.denyMessage = "Patient can only access himself";
   }
 
-  public void addResource(String id)
-  {
-    userIds.add(toIdType(id,"Patient"));
+  public void addResource(String id) {
+    userIds.add(toIdType(id, "Patient"));
   }
 
-  public void addResourceIds(List<IIdType> ids)
-  {
+  public void addResourceIds(List<IIdType> ids) {
     userIds.addAll(ids);
   }
 
   @Override
   public void addResourcesByPractitioner(String id) {
     addPractitioner(id);
-    userIds.addAll(Search.getPatients(id,authHeader));
+    userIds.addAll(Search.getPatients(id, authHeader));
   }
 
   @Override
@@ -38,12 +36,12 @@ public class PatientRules extends RuleBase {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id :
       userIds) {
-      ruleBuilder.allow().read().allResources().inCompartment("Patient",id);
+      ruleBuilder.allow().read().allResources().inCompartment("Patient", id);
     }
     List<IAuthRule> patientRule = ruleBuilder.build();
     List<IAuthRule> commonRules = commonRules();
     List<IAuthRule> denyRule = denyRule();
-    if(practitionerId != null){
+    if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
       ruleList.addAll(practitionerRule);
     }
@@ -60,12 +58,12 @@ public class PatientRules extends RuleBase {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id :
       userIds) {
-      ruleBuilder.allow().write().allResources().inCompartment("Patient",id);
+      ruleBuilder.allow().write().allResources().inCompartment("Patient", id);
     }
     List<IAuthRule> patientRule = ruleBuilder.build();
     List<IAuthRule> commonRules = commonRules();
     List<IAuthRule> denyRule = denyRule();
-    if(practitionerId != null){
+    if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();
       ruleList.addAll(practitionerRule);
     }
