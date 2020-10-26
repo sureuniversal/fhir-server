@@ -2,8 +2,8 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
-import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.jpa.starter.db.Utils;
+import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
@@ -18,20 +18,20 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-    if(theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
+    if (theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
       return new RuleBuilder()
         .allowAll("Port 8080")
         .build();
     }
 
     String authHeader = theRequestDetails.getHeader("Authorization");
-    if (authHeader == null){
+    if (authHeader == null) {
       return new RuleBuilder()
         .denyAll("no authorization header")
         .build();
     }
 
-    String token = authHeader.replace("Bearer ","");
+    String token = authHeader.replace("Bearer ", "");
 
     TokenRecord tokenRecord = Utils.getTokenRecord(token);
 
@@ -40,7 +40,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       boolean isPractitioner = tokenRecord.is_practitioner();
 
-      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails,authHeader);
+      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader);
       if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
@@ -55,7 +55,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       List<IAuthRule> rule;
       RequestTypeEnum operation = theRequestDetails.getRequestType();
-      switch (operation){
+      switch (operation) {
         case TRACE:
         case TRACK:
         case HEAD:

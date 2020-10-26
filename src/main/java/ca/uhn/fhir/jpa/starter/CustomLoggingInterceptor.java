@@ -65,7 +65,7 @@ public class CustomLoggingInterceptor {
   }
 
   @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
-  public boolean handleException(RequestDetails theRequestDetails, BaseServerResponseException theException, HttpServletRequest theServletRequest, HttpServletResponse theServletResponse){
+  public boolean handleException(RequestDetails theRequestDetails, BaseServerResponseException theException, HttpServletRequest theServletRequest, HttpServletResponse theServletResponse) {
     if (myLogExceptions) {
       // Perform any string substitutions from the message format
       StringLookup lookup = new MyLookup(theServletRequest, theException, theRequestDetails);

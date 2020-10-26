@@ -19,7 +19,7 @@ public class Utils {
       String connectionString = System.getenv("FHIR_PG_TOKEN_URL");
       String postgresUser = System.getenv("FHIR_PG_TOKEN_USER_NAME");
       String postgresPass = System.getenv("FHIR_PG_TOKEN_PASSWORD");
-      interactor = new DBInteractorPostgres(connectionString,postgresUser,postgresPass);
+      interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
     }
   }
 
@@ -27,17 +27,16 @@ public class Utils {
     return interactor.getTokenRecord(token);
   }
 
-  public static RuleBase rulesFactory(RequestDetails theRequestDetails,String authHeader){
+  public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader) {
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    switch (compartmentName)
-    {
+    switch (compartmentName) {
       case "Observation":
         return new ObservationRules(authHeader);
       case "Patient":
         return new PatientRules(authHeader);
-      case  "DeviceMetric":
+      case "DeviceMetric":
         return new DeviceMetricRules(authHeader);
-      case  "Device":
+      case "Device":
         return new DeviceRules(authHeader);
       case "metadata":
         return new MetadataRules(authHeader);

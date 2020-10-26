@@ -12,6 +12,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class DBInteractorMongo implements IDBInteractor {
 
   private final MongoDatabase usersDB;
+
   public DBInteractorMongo(String connectionString) {
     MongoClient mongoClient = new MongoClient(new MongoClientURI(connectionString));
     usersDB = mongoClient.getDatabase("users");
