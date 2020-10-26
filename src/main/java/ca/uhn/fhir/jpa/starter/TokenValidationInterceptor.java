@@ -1,21 +1,15 @@
 package ca.uhn.fhir.jpa.starter;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.jpa.starter.authorization.rules.*;
-import ca.uhn.fhir.jpa.starter.oauth.TokenRecord;
-import ca.uhn.fhir.jpa.starter.oauth.Utils;
+import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
+import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
+import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
-import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.model.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Interceptor
@@ -43,14 +37,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
     if (tokenRecord != null) {
       String bearerId = tokenRecord.getId();
-      FhirContext ctx = theRequestDetails.getFhirContext();
-
-      IGenericClient client = ctx.newRestfulGenericClient(theRequestDetails.getFhirServerBase());
 
       boolean isPractitioner = tokenRecord.is_practitioner();
-      List<IIdType> patients = isPractitioner ? getPatientsList(client, bearerId, authHeader) : new ArrayList<>();
 
-      RuleBase ruleBase = RuleBase.rulesFactory(theRequestDetails);
+      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails,authHeader);
       if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
@@ -58,8 +48,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       if (isPractitioner) {
-        ruleBase.addResourceIds(patients);
-        ruleBase.addPractitioner(bearerId);
+        ruleBase.addResourcesByPractitioner(bearerId);
       } else {
         ruleBase.addResource(bearerId);
       }
@@ -92,18 +81,5 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("invalid token")
         .build();
     }
-  }
-
-  private static List<IIdType> getPatientsList(IGenericClient client,String practitioner,String authHeader) {
-    List<IIdType> patients = new ArrayList<>();
-    Bundle patientBundle = (Bundle) client.search().forResource(Patient.class)
-      .where(new ReferenceClientParam("general-practitioner").hasId(practitioner))
-      .withAdditionalHeader("Authorization", authHeader)
-      .execute();
-    for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
-      patients.add(item.getResource().getIdElement().toUnqualifiedVersionless());
-    }
-
-    return patients;
   }
 }

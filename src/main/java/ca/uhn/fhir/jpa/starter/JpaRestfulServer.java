@@ -19,6 +19,7 @@ import ca.uhn.fhir.jpa.provider.r5.JpaConformanceProviderR5;
 import ca.uhn.fhir.jpa.provider.r5.JpaSystemProviderR5;
 import ca.uhn.fhir.jpa.search.DatabaseBackedPagingProvider;
 import ca.uhn.fhir.jpa.starter.custom.SmartConfigurationProvider;
+import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.subscription.SubscriptionInterceptorLoader;
 import ca.uhn.fhir.jpa.subscription.module.interceptor.SubscriptionDebugLogInterceptor;
 import ca.uhn.fhir.jpa.util.ResourceProviderFactory;
@@ -41,8 +42,6 @@ import org.springframework.web.cors.CorsConfiguration;
 
 import javax.servlet.ServletException;
 import java.util.*;
-
-//import ca.uhn.fhir.jpa.starter.oauth.PatientAndAdminAuthorizationInterceptor;
 
 public class JpaRestfulServer extends RestfulServer {
 
@@ -148,6 +147,8 @@ public class JpaRestfulServer extends RestfulServer {
      */
     FhirContext ctx = getFhirContext();
     ctx.setNarrativeGenerator(new DefaultThymeleafNarrativeGenerator());
+
+    Search.setClientByContext(ctx);
 
     /*
      * Default to JSON and pretty printing

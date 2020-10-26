@@ -1,4 +1,6 @@
-package ca.uhn.fhir.jpa.starter.oauth;
+package ca.uhn.fhir.jpa.starter.db.interactor;
+
+import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 
 import java.sql.*;
 
