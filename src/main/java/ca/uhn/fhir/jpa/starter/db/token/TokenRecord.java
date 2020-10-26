@@ -1,4 +1,4 @@
-package ca.uhn.fhir.jpa.starter.oauth;
+package ca.uhn.fhir.jpa.starter.db.token;
 
 public class TokenRecord {
   final String id;
