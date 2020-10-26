@@ -1,13 +1,9 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Device;
-import org.hl7.fhir.r4.model.DeviceMetric;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,50 +11,27 @@ import java.util.List;
 public class DeviceMetricRules extends RuleBase {
 
   List<IIdType> deviceMetricIds = new ArrayList<>();
-  IGenericClient client;
 
-  public DeviceMetricRules(IGenericClient client1){
-    super();
+  public DeviceMetricRules(String auth){
+    super(auth);
     this.denyMessage = "DeviceMetric not associated with patient";
-    client=client1;
   }
 
   @Override
   public void addResourceIds(List<IIdType> ids) {
-    super.addResourceIds(ids);
-    for (var id : ids) {
-      Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
-        .where(new ReferenceClientParam("patient").hasId(id))
-        .prettyPrint()
-        .execute();
-      for (var itm: deviceBundle.getEntry()){
-        Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-          .where(new ReferenceClientParam("source").hasId(itm.getResource().getIdElement().toUnqualifiedVersionless()))
-          .prettyPrint()
-          .execute();
-        for (var itm2: deviceMetricBundle.getEntry()){
-          deviceMetricIds.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
-        }
-      }
-    }
+    deviceMetricIds.addAll(Search.getDeviceMetrics(ids,authHeader));
   }
 
   @Override
   public void addResource(String id) {
-    super.addResource(id);
-    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
-      .where(new ReferenceClientParam("patient").hasId(id))
-      .prettyPrint()
-      .execute();
-    for (var itm: deviceBundle.getEntry()){
-      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-        .where(new ReferenceClientParam("source").hasId(itm.getResource().getIdElement().toUnqualifiedVersionless()))
-        .prettyPrint()
-        .execute();
-      for (var itm2: deviceMetricBundle.getEntry()){
-        deviceMetricIds.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
-      }
-    }
+    deviceMetricIds.addAll(Search.getDeviceMetrics(id,authHeader));
+  }
+
+  @Override
+  public void addResourcesByPractitioner(String id) {
+    addPractitioner(id);
+    List<IIdType> ids = Search.getPatients(id,authHeader);
+    deviceMetricIds.addAll(Search.getDeviceMetrics(ids,authHeader));
   }
 
   @Override

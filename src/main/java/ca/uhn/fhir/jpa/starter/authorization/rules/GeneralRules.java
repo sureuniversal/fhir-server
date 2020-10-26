@@ -8,13 +8,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeneralRules extends RuleBase {
-
-  public GeneralRules() {
+  public GeneralRules(String authHeader) {
+    super(authHeader);
     denyMessage = "Only general rules allowed";
   }
 
   @Override
   public void addResourceIds(List<IIdType> ids) {
+  }
+
+  @Override
+  public void addResourcesByPractitioner(String id) {
+    addPractitioner(id);
+  }
+
+  @Override
+  public void addResource(String id) {
   }
 
   @Override
@@ -46,4 +55,5 @@ public class GeneralRules extends RuleBase {
 
     return ruleList;
   }
+
 }

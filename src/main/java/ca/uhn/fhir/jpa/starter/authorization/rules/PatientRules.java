@@ -1,15 +1,35 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
+import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
+import org.hl7.fhir.instance.model.api.IIdType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PatientRules extends RuleBase {
+  List<IIdType> userIds = new ArrayList<>();
 
-  public PatientRules() {
+  public PatientRules(String authHeader) {
+    super(authHeader);
     this.denyMessage = "Patient can only access himself";
+  }
+
+  public void addResource(String id)
+  {
+    userIds.add(toIdType(id,"Patient"));
+  }
+
+  public void addResourceIds(List<IIdType> ids)
+  {
+    userIds.addAll(ids);
+  }
+
+  @Override
+  public void addResourcesByPractitioner(String id) {
+    addPractitioner(id);
+    userIds.addAll(Search.getPatients(id,authHeader));
   }
 
   @Override
