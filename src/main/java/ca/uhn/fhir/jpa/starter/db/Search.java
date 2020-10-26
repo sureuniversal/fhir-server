@@ -4,10 +4,11 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Device;
+import org.hl7.fhir.r4.model.DeviceMetric;
+import org.hl7.fhir.r4.model.Patient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class Search {
   static final String server;
 
   static {
-    server= HapiProperties.getServerAddress();
+    server = HapiProperties.getServerAddress();
   }
 
   public static IGenericClient getClient() {
@@ -29,51 +30,47 @@ public class Search {
   }
 
   public static void setClientByContext(FhirContext ctx) {
-
-    //debug
-    HttpClient httpClient = HttpClientBuilder.create().build();
-    ctx.getRestfulClientFactory().setHttpClient(httpClient);
-
     Search.setClient(ctx.newRestfulGenericClient(server));
   }
 
   public static List<IIdType> getDeviceMetrics(List<IIdType> patientIds, String authHeader) {
     List<IIdType> retVal = new ArrayList<>();
-    List<IIdType> devices = getDevices(patientIds,authHeader);
-      for (var itm: devices){
-        Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-          .where(new ReferenceClientParam("source").hasId(itm))
-          .withAdditionalHeader("Authorization", authHeader)
-          .execute();
-        for (var itm2: deviceMetricBundle.getEntry()){
-          retVal.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
-        }
-      }
-    return retVal;
-  }
-
-  public static List<IIdType> getDeviceMetrics(String patientId, String authHeader) {
-    List<IIdType> retVal = new ArrayList<>();
-    List<IIdType> devices = getDevices(patientId,authHeader);
-    for (var itm: devices){
+    List<IIdType> devices = getDevices(patientIds, authHeader);
+    for (var itm : devices) {
       Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
         .where(new ReferenceClientParam("source").hasId(itm))
         .withAdditionalHeader("Authorization", authHeader)
         .execute();
-      for (var itm2: deviceMetricBundle.getEntry()){
+      for (var itm2 : deviceMetricBundle.getEntry()) {
         retVal.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
       }
     }
     return retVal;
   }
+
+  public static List<IIdType> getDeviceMetrics(String patientId, String authHeader) {
+    List<IIdType> retVal = new ArrayList<>();
+    List<IIdType> devices = getDevices(patientId, authHeader);
+    for (var itm : devices) {
+      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
+        .where(new ReferenceClientParam("source").hasId(itm))
+        .withAdditionalHeader("Authorization", authHeader)
+        .execute();
+      for (var itm2 : deviceMetricBundle.getEntry()) {
+        retVal.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
+      }
+    }
+    return retVal;
+  }
+
   public static List<IIdType> getDevices(List<IIdType> patientIds, String authHeader) {
     List<IIdType> retVal = new ArrayList<>();
     for (var id : patientIds) {
-      Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
+      Bundle deviceBundle = (Bundle) client.search().forResource(Device.class)
         .where(new ReferenceClientParam("patient").hasId(id))
         .withAdditionalHeader("Authorization", authHeader)
         .execute();
-      for (var itm: deviceBundle.getEntry()){
+      for (var itm : deviceBundle.getEntry()) {
         retVal.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
       }
     }
@@ -82,11 +79,11 @@ public class Search {
 
   public static List<IIdType> getDevices(String patientId, String authHeader) {
     List<IIdType> retVal = new ArrayList<>();
-    Bundle deviceBundle = (Bundle)client.search().forResource(Device.class)
+    Bundle deviceBundle = (Bundle) client.search().forResource(Device.class)
       .where(new ReferenceClientParam("patient").hasId(patientId))
       .withAdditionalHeader("Authorization", authHeader)
       .execute();
-    for (var itm: deviceBundle.getEntry()){
+    for (var itm : deviceBundle.getEntry()) {
       retVal.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
     }
     return retVal;
@@ -98,7 +95,7 @@ public class Search {
       .where(new ReferenceClientParam("general-practitioner").hasId(practitioner))
       .withAdditionalHeader("Authorization", authHeader)
       .execute();
-    for (Bundle.BundleEntryComponent item: patientBundle.getEntry()){
+    for (Bundle.BundleEntryComponent item : patientBundle.getEntry()) {
       patients.add(item.getResource().getIdElement().toUnqualifiedVersionless());
     }
     return patients;

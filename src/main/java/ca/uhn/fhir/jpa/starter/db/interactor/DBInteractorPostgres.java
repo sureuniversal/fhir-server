@@ -8,7 +8,7 @@ public class DBInteractorPostgres implements IDBInteractor {
 
   private Statement postgresStm;
 
-  public DBInteractorPostgres(String connectionString,String postgresUser,String postgresPass) {
+  public DBInteractorPostgres(String connectionString, String postgresUser, String postgresPass) {
     try {
       Class.forName("org.postgresql.Driver");
       Connection postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
