@@ -253,6 +253,9 @@ public class HapiProperties {
   }
 
   public static String getServerAddress() {
+    if(System.getenv("SERVER_ADDRESS") != null){
+      return System.getenv("SERVER_ADDRESS");
+    }
     return HapiProperties.getProperty(SERVER_ADDRESS);
   }
 
@@ -273,10 +276,18 @@ public class HapiProperties {
   }
 
   public static String getLoggerFormat() {
+    if(System.getenv("LOGGER_FORMAT") != null){
+      return System.getenv("LOGGER_FORMAT");
+    }
+
     return HapiProperties.getProperty(LOGGER_FORMAT, "Path[${servletPath}] Source[${requestHeader.x-forwarded-for}] Operation[${operationType} ${operationName} ${idOrResourceName}] UA[${requestHeader.user-agent}] Params[${requestParameters}] ResponseEncoding[${responseEncodingNoDefault}]");
   }
 
   public static String getLoggerErrorFormat() {
+    if(System.getenv("LOGGER_ERROR_FORMAT") != null){
+      return System.getenv("LOGGER_ERROR_FORMAT");
+    }
+
     return HapiProperties.getProperty(LOGGER_ERROR_FORMAT, "ERROR - ${requestVerb} ${requestUrl}");
   }
 
@@ -293,15 +304,16 @@ public class HapiProperties {
   }
 
   public static String getDataSourceUrl() {
-    return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
+    return System.getenv("FHIR_PG_DATASOURCE_URL");
+    //return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
   }
 
   public static String getDataSourceUsername() {
-    return HapiProperties.getProperty(DATASOURCE_USERNAME);
+    return System.getenv("FHIR_PG_DATASOURCE_USER_NAME");
   }
 
   public static String getDataSourcePassword() {
-    return HapiProperties.getProperty(DATASOURCE_PASSWORD);
+    return System.getenv("FHIR_PG_DATASOURCE_PASSWORD");
   }
 
   public static Boolean getAllowMultipleDelete() {
