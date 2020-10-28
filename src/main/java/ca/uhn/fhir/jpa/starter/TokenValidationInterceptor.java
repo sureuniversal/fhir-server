@@ -68,7 +68,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         case DELETE:
         case PATCH:
         case POST:
-          rule = ruleBase.handlePost();
+          rule = new RuleBuilder().allowAll().build();
           break;
         default:
           throw new IllegalStateException("Unexpected value: " + operation);
