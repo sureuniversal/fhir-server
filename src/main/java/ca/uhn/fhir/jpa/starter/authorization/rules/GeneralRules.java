@@ -29,7 +29,7 @@ public class GeneralRules extends RuleBase {
   @Override
   public List<IAuthRule> handleGet() {
     List<IAuthRule> ruleList = new ArrayList<>();
-    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> commonRules = commonRulesGet();
     List<IAuthRule> denyRule = denyRule();
     if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
@@ -44,7 +44,7 @@ public class GeneralRules extends RuleBase {
   @Override
   public List<IAuthRule> handlePost() {
     List<IAuthRule> ruleList = new ArrayList<>();
-    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> commonRules = commonRulesPost();
     List<IAuthRule> denyRule = denyRule();
     if (practitionerId != null) {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();

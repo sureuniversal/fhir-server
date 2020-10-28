@@ -207,17 +207,8 @@ public class CustomLoggingInterceptor {
           case "requestBodyFhir": {
             String contentType = myRequest.getContentType();
             if (isNotBlank(contentType)) {
-              int colonIndex = contentType.indexOf(';');
-              if (colonIndex != -1) {
-                contentType = contentType.substring(0, colonIndex);
-              }
-              contentType = contentType.trim();
-
-              EncodingEnum encoding = EncodingEnum.forContentType(contentType);
-              if (encoding != null) {
                 byte[] requestContents = myRequestDetails.loadRequestContents();
                 return new String(requestContents, Constants.CHARSET_UTF8);
-              }
             }
             return "";
           }
