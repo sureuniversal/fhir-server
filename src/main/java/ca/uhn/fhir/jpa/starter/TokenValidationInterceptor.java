@@ -34,7 +34,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     String token = authHeader.replace("Bearer ", "");
 
     TokenRecord tokenRecord = Utils.getTokenRecord(token);
-
     if (tokenRecord != null) {
       String bearerId = tokenRecord.getId();
 
