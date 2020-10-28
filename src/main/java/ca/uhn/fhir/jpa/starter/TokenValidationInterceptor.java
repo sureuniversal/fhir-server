@@ -18,11 +18,11 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
 
-    if (theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
-      return new RuleBuilder()
-        .allowAll("Port 8080")
-        .build();
-    }
+//    if (theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
+//      return new RuleBuilder()
+//        .allowAll("Port 8080")
+//        .build();
+//    }
 
     String authHeader = theRequestDetails.getHeader("Authorization");
     if (authHeader == null) {
