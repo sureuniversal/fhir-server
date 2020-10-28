@@ -4,6 +4,7 @@ import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.r4.model.DeviceMetric;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ public class DeviceMetricRules extends RuleBase {
   public DeviceMetricRules(String auth) {
     super(auth);
     this.denyMessage = "DeviceMetric not associated with patient";
+    this.type = DeviceMetric.class;
   }
 
   @Override
@@ -42,7 +44,7 @@ public class DeviceMetricRules extends RuleBase {
       ruleBuilder.allow().read().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> commonRules = commonRulesGet();
     List<IAuthRule> denyRule = denyRule();
     ruleList.addAll(deviceRule);
     ruleList.addAll(commonRules);
@@ -59,7 +61,7 @@ public class DeviceMetricRules extends RuleBase {
       ruleBuilder.allow().write().allResources().inCompartment("DeviceMetric", id);
     }
     List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRules();
+    List<IAuthRule> commonRules = commonRulesPost();
     List<IAuthRule> denyRule = denyRule();
     ruleList.addAll(deviceRule);
     ruleList.addAll(commonRules);
