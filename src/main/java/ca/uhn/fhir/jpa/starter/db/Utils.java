@@ -5,7 +5,6 @@ import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorMongo;
 import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorPostgres;
 import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
-import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 
 public class Utils {
@@ -31,10 +30,6 @@ public class Utils {
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
     if(isAdmin){
       return new AdminRules(authHeader);
-    }
-    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE ||
-      theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_SYSTEM){
-      return new SearchRules(authHeader,theRequestDetails.getParameters());
     }
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName) {
