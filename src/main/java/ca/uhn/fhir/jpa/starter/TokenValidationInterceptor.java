@@ -6,6 +6,7 @@ import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
+import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
@@ -37,6 +38,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     TokenRecord tokenRecord = Utils.getTokenRecord(token);
 
     if (tokenRecord != null) {
+      if((theRequestDetails.getRequestType() == RequestTypeEnum.POST
+        || theRequestDetails.getRequestType() == RequestTypeEnum.PUT) &&
+        theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
+        return new RuleBuilder()
+          .allowAll("batch transaction")
+          .build();
+      }
       String bearerId = tokenRecord.getId();
 
       boolean isAdmin = false;
