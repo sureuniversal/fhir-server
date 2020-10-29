@@ -5,10 +5,7 @@ import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Device;
-import org.hl7.fhir.r4.model.DeviceMetric;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,5 +96,15 @@ public class Search {
       patients.add(item.getResource().getIdElement().toUnqualifiedVersionless());
     }
     return patients;
+  }
+  public static boolean isPractitionerAdmin(String practitioner, String authHeader){
+    Bundle role =(Bundle) client.search().forResource(PractitionerRole.class)
+      .where(new ReferenceClientParam("practitioner").hasId(practitioner))
+      .withAdditionalHeader("Authorization", authHeader)
+      .execute();
+    for (Bundle.BundleEntryComponent itm : role.getEntry()) {
+      return ((PractitionerRole)itm.getResource()).getIdentifier().get(0).getValue().equals("admin");
+    }
+    return false;
   }
 }
