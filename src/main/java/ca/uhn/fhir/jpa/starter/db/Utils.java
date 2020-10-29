@@ -27,7 +27,10 @@ public class Utils {
     return interactor.getTokenRecord(token);
   }
 
-  public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader) {
+  public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
+    if(isAdmin){
+      return new AdminRules(authHeader);
+    }
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName) {
       case "Observation":

@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
+import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
@@ -37,9 +38,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     if (tokenRecord != null) {
       String bearerId = tokenRecord.getId();
 
+      boolean isAdmin = false;
       boolean isPractitioner = tokenRecord.is_practitioner();
 
-      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader);
+      if(isPractitioner){
+        isAdmin = Search.isPractitionerAdmin(bearerId,authHeader);
+      }
+
+      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader,isAdmin);
       if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
@@ -67,7 +73,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         case DELETE:
         case PATCH:
         case POST:
-          rule = new RuleBuilder().allowAll().build();
+          rule = ruleBase.handlePost();
           break;
         default:
           throw new IllegalStateException("Unexpected value: " + operation);
