@@ -38,15 +38,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     if (tokenRecord != null) {
       String bearerId = tokenRecord.getId();
 
+      boolean isAdmin = false;
       boolean isPractitioner = tokenRecord.is_practitioner();
 
-      if(isPractitioner && Search.isPractitionerAdmin(bearerId,authHeader)){
-        return new RuleBuilder()
-          .allowAll("Practitioner is admin")
-          .build();
+      if(isPractitioner){
+        isAdmin = Search.isPractitionerAdmin(bearerId,authHeader);
       }
 
-      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader);
+      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader,isAdmin);
       if (ruleBase == null) {
         return new RuleBuilder()
           .denyAll("access Denied")
