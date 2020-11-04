@@ -148,7 +148,7 @@ public class JpaRestfulServer extends RestfulServer {
     FhirContext ctx = getFhirContext();
     ctx.setNarrativeGenerator(new DefaultThymeleafNarrativeGenerator());
 
-    Search.setClientByContext(ctx);
+    Search.setByContext(ctx);
 
     /*
      * Default to JSON and pretty printing

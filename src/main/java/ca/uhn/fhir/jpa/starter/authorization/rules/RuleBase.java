@@ -43,7 +43,8 @@ public abstract class RuleBase {
     return new RuleBuilder()
       .allow().metadata().andThen()
       .allow().patch().allRequests().andThen()
-      .allow().create().resourcesOfType(type).withAnyId()
+      .allow().create().resourcesOfType(type).withAnyId().andThen()
+      .allow().transaction().withAnyOperation().andApplyNormalRules()
       .build();
   }
 

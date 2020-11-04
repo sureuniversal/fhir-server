@@ -38,13 +38,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     TokenRecord tokenRecord = Utils.getTokenRecord(token);
 
     if (tokenRecord != null) {
-      if((theRequestDetails.getRequestType() == RequestTypeEnum.POST
-        || theRequestDetails.getRequestType() == RequestTypeEnum.PUT) &&
-        theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
-        return new RuleBuilder()
-          .allowAll("batch transaction")
-          .build();
-      }
+
       String bearerId = tokenRecord.getId();
 
       boolean isAdmin = false;

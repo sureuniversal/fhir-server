@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PatientRules extends RuleBase {
-  List<IIdType> userIds = new ArrayList<>();
+  List<IIdType> patientIds = new ArrayList<>();
 
   public PatientRules(String authHeader) {
     super(authHeader);
@@ -19,25 +19,24 @@ public class PatientRules extends RuleBase {
   }
 
   public void addResource(String id) {
-    userIds.add(toIdType(id, "Patient"));
+    patientIds.add(toIdType(id, "Patient"));
   }
 
   public void addResourceIds(List<IIdType> ids) {
-    userIds.addAll(ids);
+    patientIds.addAll(ids);
   }
 
   @Override
   public void addResourcesByPractitioner(String id) {
     addPractitioner(id);
-    userIds.addAll(Search.getPatients(id, authHeader));
+    patientIds.addAll(Search.getPatients(id, authHeader));
   }
 
   @Override
   public List<IAuthRule> handleGet() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
-    for (var id :
-      userIds) {
+    for (var id : patientIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Patient", id);
     }
     List<IAuthRule> patientRule = ruleBuilder.build();
@@ -58,8 +57,7 @@ public class PatientRules extends RuleBase {
   public List<IAuthRule> handlePost() {
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
-    for (var id :
-      userIds) {
+    for (var id : patientIds) {
       ruleBuilder.allow().write().allResources().inCompartment("Patient", id);
     }
     List<IAuthRule> patientRule = ruleBuilder.build();

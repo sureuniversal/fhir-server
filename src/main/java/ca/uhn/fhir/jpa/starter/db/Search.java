@@ -2,8 +2,12 @@ package ca.uhn.fhir.jpa.starter.db;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
@@ -12,10 +16,15 @@ import java.util.List;
 
 public class Search {
   private static IGenericClient client = null;
+  private static IParser parser = null;
   static final String server;
 
   static {
     server = HapiProperties.getServerAddress();
+  }
+
+  public static void setParser(IParser parser) {
+    Search.parser = parser;
   }
 
   public static IGenericClient getClient() {
@@ -26,8 +35,14 @@ public class Search {
     Search.client = client;
   }
 
-  public static void setClientByContext(FhirContext ctx) {
-    Search.setClient(ctx.newRestfulGenericClient(server));
+  public static void setByContext(FhirContext ctx) {
+
+    HttpClient httpClient = HttpClientBuilder.create().build();
+    ctx.getRestfulClientFactory().setHttpClient(httpClient);
+
+    client = ctx.newRestfulGenericClient(server);
+    parser = ctx.newJsonParser();
+    parser.setPrettyPrint(true);
   }
 
   public static List<IIdType> getDeviceMetrics(List<IIdType> patientIds, String authHeader) {
@@ -97,14 +112,25 @@ public class Search {
     }
     return patients;
   }
-  public static boolean isPractitionerAdmin(String practitioner, String authHeader){
-    Bundle role =(Bundle) client.search().forResource(PractitionerRole.class)
+
+  public static boolean isPractitionerAdmin(String practitioner, String authHeader) {
+    Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
       .withAdditionalHeader("Authorization", authHeader)
       .execute();
     for (Bundle.BundleEntryComponent itm : role.getEntry()) {
-      return ((PractitionerRole)itm.getResource()).getIdentifier().get(0).getValue().equals("admin");
+      return ((PractitionerRole) itm.getResource()).getIdentifier().get(0).getValue().equals("admin");
     }
     return false;
+  }
+
+  public static List<String> getBundleTypes(RequestDetails theRequestDetails) {
+    List<String> types = new ArrayList<>();
+    String request = new String(theRequestDetails.loadRequestContents());
+    Bundle bundle = parser.parseResource(Bundle.class, request);
+    for (var itm : bundle.getEntry()) {
+      types.add(itm.getResource().fhirType());
+    }
+    return types;
   }
 }
