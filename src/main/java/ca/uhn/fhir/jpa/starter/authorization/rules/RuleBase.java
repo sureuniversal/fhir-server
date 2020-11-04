@@ -6,6 +6,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RuleBase {
@@ -19,15 +20,53 @@ public abstract class RuleBase {
   }
 
 
-  public abstract List<IAuthRule> handleGet();
+  public List<IAuthRule> handleGet(){
+    List<IAuthRule> ruleList = new ArrayList<>();
 
-  public abstract List<IAuthRule> handlePost();
+    List<IAuthRule> rules = specificRulesGet();
+    List<IAuthRule> commonRules = commonRulesGet();
+    List<IAuthRule> denyRule = denyRule();
+
+    if (practitionerId != null) {
+      List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
+      ruleList.addAll(practitionerRule);
+    }
+
+    ruleList.addAll(rules);
+    ruleList.addAll(commonRules);
+    ruleList.addAll(denyRule);
+
+    return ruleList;
+  }
+
+  public List<IAuthRule> handlePost(){
+    List<IAuthRule> ruleList = new ArrayList<>();
+
+    List<IAuthRule> rules = specificRulesPost();
+    List<IAuthRule> commonRules = commonRulesPost();
+    List<IAuthRule> denyRule = denyRule();
+
+    if (practitionerId != null) {
+      List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();
+      ruleList.addAll(practitionerRule);
+    }
+
+    ruleList.addAll(rules);
+    ruleList.addAll(commonRules);
+    ruleList.addAll(denyRule);
+
+    return ruleList;
+  }
 
   public abstract void addResource(String id);
 
   public abstract void addResourceIds(List<IIdType> ids);
 
   public abstract void addResourcesByPractitioner(String id);
+
+  public abstract List<IAuthRule> specificRulesGet();
+
+  public abstract List<IAuthRule> specificRulesPost();
 
   public void addPractitioner(String id) {
     practitionerId = toIdType(id, "Practitioner");

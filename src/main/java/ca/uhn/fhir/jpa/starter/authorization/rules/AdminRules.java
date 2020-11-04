@@ -43,4 +43,14 @@ public class AdminRules extends RuleBase{
   public void addResourcesByPractitioner(String id) {
 
   }
+
+  @Override
+  public List<IAuthRule> specificRulesGet() {
+    return null;
+  }
+
+  @Override
+  public List<IAuthRule> specificRulesPost() {
+    return null;
+  }
 }

@@ -37,36 +37,20 @@ public class DeviceRules extends RuleBase {
   }
 
   @Override
-  public List<IAuthRule> handleGet() {
-    List<IAuthRule> ruleList = new ArrayList<>();
+  public List<IAuthRule> specificRulesGet() {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : deviceIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Device", id);
     }
-    List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRulesGet();
-    List<IAuthRule> denyRule = denyRule();
-    ruleList.addAll(deviceRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
-
-    return ruleList;
+    return ruleBuilder.build();
   }
 
   @Override
-  public List<IAuthRule> handlePost() {
-    List<IAuthRule> ruleList = new ArrayList<>();
+  public List<IAuthRule> specificRulesPost() {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : deviceIds) {
       ruleBuilder.allow().write().allResources().inCompartment("Device", id);
     }
-    List<IAuthRule> deviceRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRulesPost();
-    List<IAuthRule> denyRule = denyRule();
-    ruleList.addAll(deviceRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
-
-    return ruleList;
+    return ruleBuilder.build();
   }
 }

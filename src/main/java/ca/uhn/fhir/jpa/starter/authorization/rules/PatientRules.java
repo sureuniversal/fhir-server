@@ -33,44 +33,20 @@ public class PatientRules extends RuleBase {
   }
 
   @Override
-  public List<IAuthRule> handleGet() {
-    List<IAuthRule> ruleList = new ArrayList<>();
+  public List<IAuthRule> specificRulesGet() {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : patientIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Patient", id);
     }
-    List<IAuthRule> patientRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRulesGet();
-    List<IAuthRule> denyRule = denyRule();
-    if (practitionerId != null) {
-      List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
-      ruleList.addAll(practitionerRule);
-    }
-    ruleList.addAll(patientRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
-
-    return ruleList;
+    return ruleBuilder.build();
   }
 
   @Override
-  public List<IAuthRule> handlePost() {
-    List<IAuthRule> ruleList = new ArrayList<>();
+  public List<IAuthRule> specificRulesPost() {
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : patientIds) {
       ruleBuilder.allow().write().allResources().inCompartment("Patient", id);
     }
-    List<IAuthRule> patientRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRulesPost();
-    List<IAuthRule> denyRule = denyRule();
-    if (practitionerId != null) {
-      List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();
-      ruleList.addAll(practitionerRule);
-    }
-    ruleList.addAll(patientRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
-
-    return ruleList;
+    return ruleBuilder.build();
   }
 }
