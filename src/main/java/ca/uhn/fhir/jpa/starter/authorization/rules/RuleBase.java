@@ -44,6 +44,7 @@ public abstract class RuleBase {
 
     List<IAuthRule> rules = specificRulesPost();
     List<IAuthRule> commonRules = commonRulesPost();
+    List<IAuthRule> createRule = createRules();
     List<IAuthRule> denyRule = denyRule();
 
     if (practitionerId != null) {
@@ -53,6 +54,7 @@ public abstract class RuleBase {
 
     ruleList.addAll(rules);
     ruleList.addAll(commonRules);
+    ruleList.addAll(createRule);
     ruleList.addAll(denyRule);
 
     return ruleList;
@@ -78,11 +80,15 @@ public abstract class RuleBase {
       .allow().patch().allRequests()
       .build();
   }
+  public List<IAuthRule> createRules() {
+    return new RuleBuilder()
+      .allow().create().resourcesOfType(type).withAnyId().andThen()
+      .build();
+  }
   public List<IAuthRule> commonRulesPost() {
     return new RuleBuilder()
       .allow().metadata().andThen()
       .allow().patch().allRequests().andThen()
-      .allow().create().resourcesOfType(type).withAnyId().andThen()
       .allow().transaction().withAnyOperation().andApplyNormalRules()
       .build();
   }
