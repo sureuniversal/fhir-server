@@ -46,6 +46,9 @@ public class Utils {
           case 0:
             return null;
           case 1:
+            if(types.get(0).equals("GET")){
+              return new AdminRules();
+            }
             compartmentName = types.get(0);
             break;
           default:

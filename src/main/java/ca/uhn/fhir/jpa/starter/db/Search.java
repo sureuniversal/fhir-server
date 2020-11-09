@@ -12,7 +12,9 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Search {
   private static IGenericClient client = null;
@@ -126,10 +128,17 @@ public class Search {
 
   public static List<String> getBundleTypes(RequestDetails theRequestDetails) {
     List<String> types = new ArrayList<>();
+
     String request = new String(theRequestDetails.loadRequestContents());
     Bundle bundle = parser.parseResource(Bundle.class, request);
     for (var itm : bundle.getEntry()) {
-      types.add(itm.getResource().fhirType());
+      Resource resource = itm.getResource();
+      Bundle.BundleEntryRequestComponent request1 = itm.getRequest();
+      if (resource != null) {
+        types.add( resource.fhirType());
+      } else if (request1 != null && request1.getMethod() == Bundle.HTTPVerb.GET) {
+        return Arrays.stream(new String[]{"GET"}).collect(Collectors.toList());
+      }
     }
     return types;
   }
