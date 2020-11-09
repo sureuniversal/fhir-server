@@ -33,6 +33,7 @@ public class HapiProperties {
   static final String ALLOW_MULTIPLE_DELETE = "allow_multiple_delete";
   static final String ALLOW_PLACEHOLDER_REFERENCES = "allow_placeholder_references";
   static final String REUSE_CACHED_SEARCH_RESULTS_MILLIS = "reuse_cached_search_results_millis";
+  static final String DATASOURCE_TIMEOUT = "datasource.timeout";
   static final String DATASOURCE_DRIVER = "datasource.driver";
   static final String DATASOURCE_MAX_POOL_SIZE = "datasource.max_pool_size";
   static final String DATASOURCE_PASSWORD = "datasource.password";
@@ -293,6 +294,10 @@ public class HapiProperties {
 
   public static Boolean getLoggerLogExceptions() {
     return HapiProperties.getBooleanProperty(LOGGER_LOG_EXCEPTIONS, true);
+  }
+
+  public static Integer getDatasourceTimeout() {
+    return HapiProperties.getIntegerProperty(DATASOURCE_TIMEOUT, 5000);
   }
 
   public static String getDataSourceDriver() {

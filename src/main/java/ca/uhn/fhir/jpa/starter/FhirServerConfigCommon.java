@@ -164,6 +164,7 @@ public class FhirServerConfigCommon {
     BasicDataSource retVal = new BasicDataSource();
     Driver driver = (Driver) Class.forName(HapiProperties.getDataSourceDriver()).getConstructor().newInstance();
     retVal.setDriver(driver);
+    retVal.setMaxWaitMillis(HapiProperties.getDatasourceTimeout());
     retVal.setUrl(HapiProperties.getDataSourceUrl());
     retVal.setUsername(HapiProperties.getDataSourceUsername());
     retVal.setPassword(HapiProperties.getDataSourcePassword());

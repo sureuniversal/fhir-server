@@ -101,7 +101,7 @@
              configuration is used below.
         -->
         <Connector port="8443" protocol="org.apache.coyote.http11.Http11AprProtocol"
-                   maxThreads="150" SSLEnabled="true"  >
+                   maxThreads="150" SSLEnabled="true" connectionTimeout="5000">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig>
                 <Certificate certificateKeyFile="cert/privkey.pem"
