@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="tomcat 9" type="TomcatRunner-By-Camtwo" factoryName="Tomcat Runner" singleton="true">
+    <option name="TomcatRunnerV001-Modules" value="{&quot;modules&quot;:[{&quot;context&quot;:&quot;fhir-server&quot;,&quot;documentBase&quot;:&quot;$PROJECT_DIR$&quot;,&quot;internal&quot;:true,&quot;reloadable&quot;:true}]}" />
+    <option name="TomcatRunnerV001-TomcatInstallation" value="$USER_HOME$/apache-tomcat-9.0.36" />
+    <option name="TomcatRunnerV001-VmArgs" value="" />
+    <option name="TomcatRunnerV001-PassParentEnvVars" value="true" />
+    <option name="TomcatRunnerV001-CleanTmpWork" value="false" />
+    <envs>
+      <env name="FHIR_PG_DATASOURCE_USER_NAME" value="postgres" />
+      <env name="JRE_HOME" value="&quot;/usr/lib/jvm/default-java&quot;" />
+      <env name="FHIR_PG_DATASOURCE_PASSWORD" value="QvZP25ycU5bSPCVX" />
+      <env name="FHIR_PG_DATASOURCE_URL" value="jdbc:postgresql://fhir-db-dev.cbvy9h3o4oj9.eu-central-1.rds.amazonaws.com/fhir" />
+      <env name="CATALINA_HOME" value="&quot;$USER_HOME$/apache-tomcat-9.0.36&quot;" />
+      <env name="HAPI_SERVER_NAME" value="hapi-fhir-jpaserver" />
+      <env name="LOGGER_ERROR_FORMAT" value="ERROR - ${requestVerb} ${requestUrl} OP:${operationType} Message:${exceptionMessage} authorization=${requestHeader.authorization} IP:${remoteAddr}" />
+      <env name="FHIR_MONGO_DATASOURCE_URL" value="mongodb://root:9Tq__1DLaN@localhost:27018/" />
+      <env name="LOGGER_FORMAT" value="${requestVerb} ${idOrResourceName}${requestParameters} OP:${operationType} ${requestBodyFhir} - authorization=${requestHeader.authorization} IP-${remoteAddr}" />
+    </envs>
+    <method v="2">
+      <option name="MakeProject" enabled="true" />
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="war:war" />
+      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_cp" />
+    </method>
+  </configuration>
+</component>
