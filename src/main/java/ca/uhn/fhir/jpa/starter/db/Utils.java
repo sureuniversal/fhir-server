@@ -5,6 +5,7 @@ import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorMongo;
 import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorPostgres;
 import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
+import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 
 public class Utils {
@@ -38,8 +39,14 @@ public class Utils {
       case "Patient":
         return new PatientRules(authHeader);
       case "DeviceMetric":
+        if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
+          return new AdminRules(authHeader);
+        }
         return new DeviceMetricRules(authHeader);
       case "Device":
+        if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
+          return new AdminRules(authHeader);
+        }
         return new DeviceRules(authHeader);
       case "metadata":
         return new MetadataRules(authHeader);
