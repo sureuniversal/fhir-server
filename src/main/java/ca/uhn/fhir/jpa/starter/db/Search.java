@@ -142,4 +142,20 @@ public class Search {
     }
     return types;
   }
+
+  public static Patient getPatient(IIdType id){
+    return client.read().resource(Patient.class).withId(id).execute();
+  }
+
+  public static Device getDevice(IIdType id){
+    return client.read().resource(Device.class).withId(id).execute();
+  }
+
+  public static DeviceMetric getDeviceMetric(IIdType id) {
+    return client.read().resource(DeviceMetric.class).withId(id).execute();
+  }
+
+  public static Observation getObservation(IIdType id) {
+    return client.read().resource(Observation.class).withId(id).execute();
+  }
 }
