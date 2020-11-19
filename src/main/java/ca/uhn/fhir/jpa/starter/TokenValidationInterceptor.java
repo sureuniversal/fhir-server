@@ -1,13 +1,10 @@
 package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
 import ca.uhn.fhir.jpa.starter.authorization.rules.RuleImplPatient;
 import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
-import ca.uhn.fhir.rest.api.RequestTypeEnum;
-import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
