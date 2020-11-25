@@ -167,9 +167,6 @@ public class JpaRestfulServer extends RestfulServer {
      * but makes the server much more scalable.
      */
     setPagingProvider(appCtx.getBean(DatabaseBackedPagingProvider.class));
-
-    TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
-    this.registerInterceptor(tokenValidationInterceptor);
     /*
      * This interceptor formats the output using nice colourful
      * HTML output when the request is detected to come from a
@@ -187,9 +184,13 @@ public class JpaRestfulServer extends RestfulServer {
     loggingInterceptor.setMessageFormat(HapiProperties.getLoggerFormat());
     loggingInterceptor.setErrorMessageFormat(HapiProperties.getLoggerErrorFormat());
     loggingInterceptor.setLogExceptions(HapiProperties.getLoggerLogExceptions());
+    loggingInterceptor.setIncomingFormat(HapiProperties.getLoggerIncomingFormat());
     //loggingInterceptor.setLogRequestSummary(true);
     //loggingInterceptor.setLogRequestBody(true);
     this.registerInterceptor(loggingInterceptor);
+
+    TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
+    this.registerInterceptor(tokenValidationInterceptor);
 
     /*
      * If you are hosting this server at a specific DNS name, the server will try to
