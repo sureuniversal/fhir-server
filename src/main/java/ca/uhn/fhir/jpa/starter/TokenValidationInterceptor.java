@@ -24,7 +24,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .allowAll("Port 8080")
         .build();
     }
-    theRequestDetails.setRequestId();
+
     String authHeader = theRequestDetails.getHeader("Authorization");
     if (authHeader == null) {
       return new RuleBuilder()
