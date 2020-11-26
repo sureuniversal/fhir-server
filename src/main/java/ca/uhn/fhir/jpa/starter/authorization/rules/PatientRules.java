@@ -56,23 +56,8 @@ public class PatientRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
-    List<IAuthRule> ruleList = new ArrayList<>();
-    RuleBuilder ruleBuilder = new RuleBuilder();
-    for (var id :
-      userIds) {
-      ruleBuilder.allow().write().allResources().inCompartment("Patient", id);
-    }
-    List<IAuthRule> patientRule = ruleBuilder.build();
-    List<IAuthRule> commonRules = commonRulesPost();
-    List<IAuthRule> denyRule = denyRule();
-    if (practitionerId != null) {
-      List<IAuthRule> practitionerRule = new RuleBuilder().allow().write().allResources().inCompartment("Practitioner", practitionerId).build();
-      ruleList.addAll(practitionerRule);
-    }
-    ruleList.addAll(patientRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
-
-    return ruleList;
+    return new RuleBuilder()
+      .allowAll("")
+      .build();
   }
 }
