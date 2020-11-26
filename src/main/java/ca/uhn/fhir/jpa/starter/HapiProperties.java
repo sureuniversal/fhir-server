@@ -315,8 +315,16 @@ public class HapiProperties {
     return HapiProperties.getIntegerProperty(DATASOURCE_MAX_POOL_SIZE, 10);
   }
 
+  public static boolean isPGToken(){
+    return System.getenv("FHIR_PG_DATASOURCE_TOKEN_DB") != null;
+  }
+
+  public static String getTokenDataSourceUrl() {
+    return System.getenv("FHIR_PG_DATASOURCE_URL") + "/" + System.getenv("FHIR_PG_DATASOURCE_TOKEN_DB");
+  }
+
   public static String getDataSourceUrl() {
-    return System.getenv("FHIR_PG_DATASOURCE_URL");
+    return System.getenv("FHIR_PG_DATASOURCE_URL") + "/" + System.getenv("FHIR_PG_DATASOURCE_FHIR_DB");
     //return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
   }
 
