@@ -87,6 +87,7 @@ public class RuleImplPatient implements IAuthRule {
       case PATCH:
       case CREATE:
       case UPDATE:
+        if(theInputResource.getClass() == Patient.class)  return new Verdict(PolicyEnum.ALLOW, this);
         return resourceDecision(theInputResource);
       case HISTORY_INSTANCE:
       case HISTORY_TYPE:
