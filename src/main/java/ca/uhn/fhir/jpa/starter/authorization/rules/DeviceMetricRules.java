@@ -25,6 +25,11 @@ public class DeviceMetricRules extends RuleBase {
   }
 
   @Override
+  public void addCareTeam(List<IIdType> ids) {
+
+  }
+
+  @Override
   public void addResource(String id) {
     deviceMetricIds.addAll(Search.getDeviceMetrics(id, authHeader));
   }

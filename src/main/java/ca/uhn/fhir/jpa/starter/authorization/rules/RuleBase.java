@@ -27,6 +27,8 @@ public abstract class RuleBase {
 
   public abstract void addResourceIds(List<IIdType> ids);
 
+  public abstract void addCareTeam(List<IIdType> ids);
+
   public abstract void addResourcesByPractitioner(String id);
 
   public void addPractitioner(String id) {
