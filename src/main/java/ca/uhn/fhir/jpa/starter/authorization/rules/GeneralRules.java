@@ -18,6 +18,10 @@ public class GeneralRules extends RuleBase {
   }
 
   @Override
+  public void addCareTeam(List<IIdType> ids) {
+  }
+
+  @Override
   public void addResourcesByPractitioner(String id) {
     addPractitioner(id);
   }
