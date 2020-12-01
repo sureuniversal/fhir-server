@@ -36,7 +36,9 @@ public class Utils {
     switch (compartmentName) {
       case "Observation":
         return new ObservationRules(authHeader);
+      case "CareTeam":
       case "Patient":
+      case "Practitioner":
         return new PatientRules(authHeader);
       case "DeviceMetric":
         if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
@@ -52,8 +54,6 @@ public class Utils {
         return new MetadataRules(authHeader);
       case "PractitionerRole":
         return new PractitionerRoleRules(authHeader);
-      case "Practitioner":
-        return new PractitionerRules(authHeader);
       default:
         return null;
     }

@@ -25,6 +25,11 @@ public class DeviceRules extends RuleBase {
   }
 
   @Override
+  public void addCareTeam(List<IIdType> ids) {
+
+  }
+
+  @Override
   public void addResourcesByPractitioner(String id) {
     addPractitioner(id);
     List<IIdType> ids = Search.getPatients(id, authHeader);

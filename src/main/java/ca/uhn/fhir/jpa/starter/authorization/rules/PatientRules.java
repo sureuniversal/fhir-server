@@ -11,10 +11,11 @@ import java.util.List;
 
 public class PatientRules extends RuleBase {
   List<IIdType> userIds = new ArrayList<>();
+  List<IIdType> practitionerIds = new ArrayList<>();
 
   public PatientRules(String authHeader) {
     super(authHeader);
-    this.denyMessage = "Patient can only access himself";
+    this.denyMessage = "Not in care team";
     this.type = Patient.class;
   }
 
@@ -24,6 +25,18 @@ public class PatientRules extends RuleBase {
 
   public void addResourceIds(List<IIdType> ids) {
     userIds.addAll(ids);
+  }
+
+  @Override
+  public void addCareTeam(List<IIdType> ids) {
+    for (var itm :
+      ids) {
+        if (itm.getResourceType().equals("Patient")) {
+          userIds.add(itm);
+        } else {
+          practitionerIds.add(itm);
+        }
+      }
   }
 
   @Override
@@ -40,6 +53,11 @@ public class PatientRules extends RuleBase {
       userIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Patient", id);
     }
+    for (var id :
+      practitionerIds) {
+      ruleBuilder.allow().read().allResources().inCompartment("Practitioner", id);
+    }
+
     List<IAuthRule> patientRule = ruleBuilder.build();
     List<IAuthRule> commonRules = commonRulesGet();
     List<IAuthRule> denyRule = denyRule();

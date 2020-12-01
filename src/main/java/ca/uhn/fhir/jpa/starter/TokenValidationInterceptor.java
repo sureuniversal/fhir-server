@@ -10,6 +10,7 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
+import org.hl7.fhir.instance.model.api.IIdType;
 
 import java.util.List;
 
@@ -53,9 +54,17 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       if (isPractitioner) {
+        List<IIdType> careTeam = Search.getCareTeamPractitioner(bearerId,authHeader);
         ruleBase.addResourcesByPractitioner(bearerId);
+        if(careTeam != null){
+          ruleBase.addResourceIds(careTeam);
+        }
       } else {
+        List<IIdType> careTeam = Search.getCareTeamPatient(bearerId,authHeader);
         ruleBase.addResource(bearerId);
+        if(careTeam != null){
+          ruleBase.addCareTeam(careTeam);
+        }
       }
 
       List<IAuthRule> rule;
