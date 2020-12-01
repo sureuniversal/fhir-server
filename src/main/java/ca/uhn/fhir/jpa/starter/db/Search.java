@@ -97,6 +97,38 @@ public class Search {
     }
     return patients;
   }
+
+  public static List<IIdType> getCareTeamPractitioner(String id, String authHeader){
+    List<IIdType> retVal = new ArrayList<>();
+    Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
+      .where(new ReferenceClientParam("participant").hasId(id))
+      .withAdditionalHeader("Authorization", authHeader)
+      .execute();
+    if(!careTeamBundle.hasEntry()) {
+      return null;
+    }
+    for (var itm : careTeamBundle.getEntry()) {
+      retVal.add(((CareTeam)itm.getResource()).getSubject().getReferenceElement().toUnqualifiedVersionless());
+    }
+    return retVal;
+  }
+
+
+  public static List<IIdType> getCareTeamPatient(String patientId, String authHeader){
+    List<IIdType> retVal = new ArrayList<>();
+    Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
+      .where(new ReferenceClientParam("subject").hasId(patientId))
+      .withAdditionalHeader("Authorization", authHeader)
+      .execute();
+    if(!careTeamBundle.hasEntry()) {
+      return null;
+    }
+    for (var itm : ((CareTeam)careTeamBundle.getEntry().get(0).getResource()).getParticipant()) {
+      retVal.add(itm.getMember().getReferenceElement().toUnqualifiedVersionless());
+    }
+    return retVal;
+  }
+
   public static boolean isPractitionerAdmin(String practitioner, String authHeader){
     Bundle role =(Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
