@@ -3,7 +3,6 @@ package ca.uhn.fhir.jpa.starter.authorization.rules;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
-
 import java.util.List;
 
 public class CareTeamRules extends RuleBase{
