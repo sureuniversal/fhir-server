@@ -7,6 +7,7 @@ import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 
 public class Utils {
 
@@ -32,6 +33,11 @@ public class Utils {
     if(isAdmin){
       return new AdminRules(authHeader);
     }
+
+    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
+      return new AdminRules(authHeader);
+    }
+
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName) {
       case "Observation":
