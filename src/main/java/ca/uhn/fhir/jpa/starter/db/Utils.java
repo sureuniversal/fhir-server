@@ -37,6 +37,7 @@ public class Utils {
       case "Observation":
         return new ObservationRules(authHeader);
       case "CareTeam":
+        return new CareTeamRules(authHeader);
       case "Patient":
       case "Practitioner":
         return new PatientRules(authHeader);
