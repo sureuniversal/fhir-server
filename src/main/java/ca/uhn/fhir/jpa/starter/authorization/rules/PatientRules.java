@@ -15,7 +15,7 @@ public class PatientRules extends RuleBase {
 
   public PatientRules(String authHeader) {
     super(authHeader);
-    this.denyMessage = "Not in care team";
+    this.denyMessage = "Patient Rulr";
     this.type = Patient.class;
   }
 
