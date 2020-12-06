@@ -55,7 +55,10 @@ public class PatientRules extends RuleBase {
     var ids = new ArrayList<String>();
     for (var entry : allowedIds)
     {
-      ids.add(entry.getIdPart());
+      var id = entry.getIdPart();
+      if (id != null) {
+        ids.add(entry.getIdPart());
+      }
     }
 
     var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
