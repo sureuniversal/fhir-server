@@ -55,6 +55,7 @@ public class CustomLoggingInterceptor {
   private boolean myLogExceptions = true;
   private Logger myLogger = ourLog;
   private String myMessageFormat = "${operationType} - ${idOrResourceName}";
+  private String myIncomingFormat = "${operationType} - ${idOrResourceName}";
 
 
   /**
@@ -79,6 +80,16 @@ public class CustomLoggingInterceptor {
     return true;
   }
 
+  @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
+  public void requestPreHandled(ServletRequestDetails theRequestDetails){
+    // Perform any string substitutions from the message format
+    StringLookup lookup = new MyLookup(theRequestDetails.getServletRequest(), theRequestDetails);
+    StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
+
+    // Actually log the line
+    String line = subs.replace(myIncomingFormat);
+    myLogger.info(line);
+  }
 
   @Hook(Pointcut.SERVER_PROCESSING_COMPLETED_NORMALLY)
   public void processingCompletedNormally(ServletRequestDetails theRequestDetails) {
@@ -131,6 +142,15 @@ public class CustomLoggingInterceptor {
   public void setMessageFormat(String theMessageFormat) {
     Validate.notBlank(theMessageFormat, "Message format can not be null/empty");
     myMessageFormat = theMessageFormat;
+  }
+
+  /**
+   * Sets the incoming message format itself. See the {@link LoggingInterceptor class documentation} for information on the
+   * format
+   */
+  public void setIncomingFormat(String theIncomingFormat) {
+    Validate.notBlank(theIncomingFormat, "Message format can not be null/empty");
+    myIncomingFormat = theIncomingFormat;
   }
 
   private static final class MyLookup implements StringLookup {
@@ -207,8 +227,8 @@ public class CustomLoggingInterceptor {
           case "requestBodyFhir": {
             String contentType = myRequest.getContentType();
             if (isNotBlank(contentType)) {
-                byte[] requestContents = myRequestDetails.loadRequestContents();
-                return new String(requestContents, Constants.CHARSET_UTF8);
+              byte[] requestContents = myRequestDetails.loadRequestContents();
+              return new String(requestContents, Constants.CHARSET_UTF8);
             }
             return "";
           }

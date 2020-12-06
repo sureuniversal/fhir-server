@@ -1,5 +1,6 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
+import ca.uhn.fhir.jpa.starter.db.CareTeamSearch;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -39,6 +40,13 @@ public class GeneralRules extends RuleBase {
       List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", practitionerId).build();
       ruleList.addAll(practitionerRule);
     }
+
+    var allowedInCareTeam = this.handleCareTeam();
+    for (var id : allowedInCareTeam) {
+      List<IAuthRule> practitionerRule = new RuleBuilder().allow().read().allResources().inCompartment("Practitioner", id).build();
+      ruleList.addAll(practitionerRule);
+    }
+
     ruleList.addAll(commonRules);
     ruleList.addAll(denyRule);
 
@@ -60,4 +68,16 @@ public class GeneralRules extends RuleBase {
     return ruleList;
   }
 
+  public List<IIdType> handleCareTeam()
+  {
+    var allowedIds = CareTeamSearch.GetAllowedCareTeamsForUser(this.userId);
+    var ids = new ArrayList<String>();
+    for (var entry : allowedIds)
+    {
+      ids.add(entry.getIdPart());
+    }
+
+    var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
+    return allowedToReadUsers;
+  }
 }

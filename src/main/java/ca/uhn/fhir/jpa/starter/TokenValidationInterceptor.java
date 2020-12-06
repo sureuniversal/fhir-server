@@ -19,7 +19,6 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
-
     if (theRequestDetails.getCompleteUrl().split("\\?")[0].contains(":8080")) {
       return new RuleBuilder()
         .allowAll("Port 8080")
@@ -34,66 +33,57 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
 
     String token = authHeader.replace("Bearer ", "");
-
     TokenRecord tokenRecord = Utils.getTokenRecord(token);
-    if (tokenRecord != null) {
-      String bearerId = tokenRecord.getId();
-
-      boolean isAdmin = false;
-      boolean isPractitioner = tokenRecord.is_practitioner();
-
-      if(isPractitioner){
-        isAdmin = Search.isPractitionerAdmin(bearerId,authHeader);
-      }
-
-      RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader,isAdmin);
-      if (ruleBase == null) {
-        return new RuleBuilder()
-          .denyAll("access Denied")
-          .build();
-      }
-
-      if (isPractitioner) {
-        List<IIdType> careTeam = Search.getCareTeamPractitioner(bearerId,authHeader);
-        ruleBase.addResourcesByPractitioner(bearerId);
-        if(careTeam != null){
-          ruleBase.addResourceIds(careTeam);
-        }
-      } else {
-        List<IIdType> careTeam = Search.getCareTeamPatient(bearerId,authHeader);
-        ruleBase.addResource(bearerId);
-        if(careTeam != null){
-          ruleBase.addCareTeam(careTeam);
-        }
-      }
-
-      List<IAuthRule> rule;
-      RequestTypeEnum operation = theRequestDetails.getRequestType();
-      switch (operation) {
-        case TRACE:
-        case TRACK:
-        case HEAD:
-        case CONNECT:
-        case OPTIONS:
-        case GET:
-          rule = ruleBase.handleGet();
-          break;
-        case PUT:
-        case DELETE:
-        case PATCH:
-        case POST:
-          rule = ruleBase.handlePost();
-          break;
-        default:
-          throw new IllegalStateException("Unexpected value: " + operation);
-      }
-
-      return rule;
-
-    } else {
+    if (tokenRecord == null) {
       return new RuleBuilder()
         .denyAll("invalid token")
         .build();
     }
+
+    String userId = tokenRecord.getId();
+
+    boolean isAdmin = false;
+    boolean isPractitioner = tokenRecord.is_practitioner();
+
+    if(isPractitioner){
+      isAdmin = Search.isPractitionerAdmin(userId);
+    }
+
+    RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader, isAdmin);
+    if (ruleBase == null) {
+      return new RuleBuilder()
+        .denyAll("access Denied")
+        .build();
+    }
+
+    if (isPractitioner) {
+      ruleBase.addResourcesByPractitioner(userId);
+    } else {
+      ruleBase.addResource(userId);
+    }
+
+    ruleBase.setUserId(userId);
+    List<IAuthRule> rule;
+    RequestTypeEnum operation = theRequestDetails.getRequestType();
+    switch (operation) {
+      case TRACE:
+      case TRACK:
+      case HEAD:
+      case CONNECT:
+      case OPTIONS:
+      case GET:
+        rule = ruleBase.handleGet();
+        break;
+      case PUT:
+      case DELETE:
+      case PATCH:
+      case POST:
+        rule = ruleBase.handlePost();
+        break;
+      default:
+        throw new IllegalStateException("Unexpected value: " + operation);
+    }
+
+    return rule;
   }
 }
