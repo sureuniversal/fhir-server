@@ -12,6 +12,7 @@ public abstract class RuleBase {
   protected String denyMessage;
   protected IIdType practitionerId = null;
   protected String authHeader;
+  protected String userId;
   protected Class<? extends IBaseResource> type = null;
 
   public RuleBase(String auth) {
@@ -59,4 +60,8 @@ public abstract class RuleBase {
     return new IdType(resourceType, id);
   }
 
+  public void setUserId(String userId)
+  {
+    this.userId = userId;
+  }
 }
