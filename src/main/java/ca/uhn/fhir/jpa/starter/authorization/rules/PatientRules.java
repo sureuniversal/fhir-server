@@ -1,5 +1,6 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
+import ca.uhn.fhir.jpa.starter.db.CareTeamSearch;
 import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
@@ -15,11 +16,13 @@ public class PatientRules extends RuleBase {
 
   public PatientRules(String authHeader) {
     super(authHeader);
-    this.denyMessage = "Patient Rulr";
+    this.denyMessage = "Patient Rule";
     this.type = Patient.class;
   }
 
   public void addResource(String id) {
+    var patientsCreated = Search.getPatientsCreatedByPatientWithId(id);
+    userIds.addAll(patientsCreated);
     userIds.add(toIdType(id, "Patient"));
   }
 
@@ -29,8 +32,7 @@ public class PatientRules extends RuleBase {
 
   @Override
   public void addCareTeam(List<IIdType> ids) {
-    for (var itm :
-      ids) {
+    for (var itm : ids) {
         if (itm.getResourceType().equals("Patient")) {
           userIds.add(itm);
         } else {
@@ -41,12 +43,29 @@ public class PatientRules extends RuleBase {
 
   @Override
   public void addResourcesByPractitioner(String id) {
+    var patientsCreated = Search.getPatientsCreatedByPatientWithId(id);
+    userIds.addAll(patientsCreated);
     addPractitioner(id);
     userIds.addAll(Search.getPatients(id, authHeader));
   }
 
+  public void handleCareTeam()
+  {
+    var allowedIds = CareTeamSearch.GetAllowedCareTeamsForUser(this.userId);
+    var ids = new ArrayList<String>();
+    for (var entry : allowedIds)
+    {
+      ids.add(entry.getIdPart());
+    }
+
+    var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
+    userIds.addAll(allowedToReadUsers);
+  }
+
   @Override
   public List<IAuthRule> handleGet() {
+    this.handleCareTeam();
+
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id :
