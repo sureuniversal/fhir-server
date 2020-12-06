@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Search {
-  private static IGenericClient client = null;
+  protected static IGenericClient client = null;
   static final String server;
 
   static {
@@ -98,45 +99,37 @@ public class Search {
     return patients;
   }
 
-  public static List<IIdType> getCareTeamPractitioner(String id, String authHeader){
+  public static List<IIdType> getPatientsCreatedByPatientWithId(String id){
     List<IIdType> retVal = new ArrayList<>();
-    Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
-      .where(new ReferenceClientParam("participant").hasId(id))
-      .withAdditionalHeader("Authorization", authHeader)
+
+    Bundle careTeamBundle = (Bundle) client.search().forResource(Patient.class)
+      .where(new TokenClientParam("identifier").exactly().systemAndCode("system:sureCareTeamIdentifier", id))
       .execute();
-    if(!careTeamBundle.hasEntry()) {
-      return null;
-    }
+
     for (var itm : careTeamBundle.getEntry()) {
-      retVal.add(((CareTeam)itm.getResource()).getSubject().getReferenceElement().toUnqualifiedVersionless());
+      var patientId = itm.getResource().getIdElement().toUnqualifiedVersionless();
+      retVal.add(patientId);
     }
+
     return retVal;
   }
 
-
-  public static List<IIdType> getCareTeamPatient(String patientId, String authHeader){
-    List<IIdType> retVal = new ArrayList<>();
-    Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
-      .where(new ReferenceClientParam("subject").hasId(patientId))
-      .withAdditionalHeader("Authorization", authHeader)
-      .execute();
-    if(!careTeamBundle.hasEntry()) {
-      return null;
-    }
-    for (var itm : ((CareTeam)careTeamBundle.getEntry().get(0).getResource()).getParticipant()) {
-      retVal.add(itm.getMember().getReferenceElement().toUnqualifiedVersionless());
-    }
-    return retVal;
-  }
-
-  public static boolean isPractitionerAdmin(String practitioner, String authHeader){
-    Bundle role =(Bundle) client.search().forResource(PractitionerRole.class)
+  public static boolean isPractitionerAdmin(String practitioner){
+    Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
-      .withAdditionalHeader("Authorization", authHeader)
       .execute();
+
     for (Bundle.BundleEntryComponent itm : role.getEntry()) {
-      return ((PractitionerRole)itm.getResource()).getIdentifier().get(0).getValue().equals("admin");
+      var identifiers = ((PractitionerRole)itm.getResource()).getIdentifier();
+      for (var identifier : identifiers)
+      {
+        if (identifier.getValue().equals("admin"))
+        {
+          return true;
+        }
+      }
     }
+
     return false;
   }
 }
