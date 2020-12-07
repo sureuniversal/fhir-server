@@ -61,20 +61,24 @@ public class PatientRules extends RuleBase {
       }
     }
 
-    var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
-    userIds.addAll(allowedToReadUsers);
+    if (!ids.isEmpty()) {
+      var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
+      userIds.addAll(allowedToReadUsers);
+    }
   }
 
   @Override
   public List<IAuthRule> handleGet() {
     this.handleCareTeam();
-
+    var myId = RuleBase.toIdType(this.userId, "Patient");
+    userIds.add(myId);
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id :
       userIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Patient", id);
     }
+
     for (var id :
       practitionerIds) {
       ruleBuilder.allow().read().allResources().inCompartment("Practitioner", id);
