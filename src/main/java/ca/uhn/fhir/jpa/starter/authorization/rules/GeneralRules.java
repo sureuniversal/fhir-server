@@ -80,7 +80,11 @@ public class GeneralRules extends RuleBase {
       }
     }
 
-    var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
-    return allowedToReadUsers;
+    if (!ids.isEmpty()) {
+      var allowedToReadUsers = CareTeamSearch.getAllUsersInCareTeams(ids);
+      return allowedToReadUsers;
+    }
+
+    return new ArrayList<>();
   }
 }
