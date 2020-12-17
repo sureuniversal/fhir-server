@@ -40,13 +40,16 @@ public class Utils {
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName) {
+      case "Flag":
+        return new PatientRules(authHeader);
       case "Observation":
         return new ObservationRules(authHeader);
       case "CareTeam":
         return new CareTeamRules(authHeader);
       case "Patient":
-      case "Practitioner":
         return new PatientRules(authHeader);
+      case "Practitioner":
+        return new PractitionerRules(authHeader);
       case "DeviceMetric":
         if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
           return new AdminRules(authHeader);
