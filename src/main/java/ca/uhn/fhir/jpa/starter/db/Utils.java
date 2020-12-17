@@ -41,7 +41,7 @@ public class Utils {
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
     switch (compartmentName) {
       case "Flag":
-        return new PatientRules(authHeader);
+        return new FlagRules(authHeader);
       case "Observation":
         return new ObservationRules(authHeader);
       case "CareTeam":
