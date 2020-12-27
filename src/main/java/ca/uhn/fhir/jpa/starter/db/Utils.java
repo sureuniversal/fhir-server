@@ -9,9 +9,14 @@ import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Utils {
 
   private final static IDBInteractor interactor;
+  private final static Map<String,TokenRecord> tokenCash = new HashMap<>();
 
   static {
     if (System.getenv("FHIR_PG_TOKEN_URL") == null) {
@@ -26,7 +31,14 @@ public class Utils {
   }
 
   public static TokenRecord getTokenRecord(String token) {
-    return interactor.getTokenRecord(token);
+    if(!tokenCash.containsKey(token)){
+      TokenRecord record = interactor.getTokenRecord(token);
+      if(record == null){
+        return null;
+      }
+      tokenCash.put(token,record);
+    }
+    return tokenCash.get(token);
   }
 
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
