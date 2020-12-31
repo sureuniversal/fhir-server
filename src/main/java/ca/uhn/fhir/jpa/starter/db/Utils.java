@@ -21,21 +21,17 @@ public class Utils {
       String postgresPass = System.getenv("FHIR_PG_TOKEN_PASSWORD");
       interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
   }
-  
-  public static TokenRecord getTokenRecord(String token) {
-    return interactor.getTokenRecord(token);
-  }
 
-//  public static TokenRecord getTokenRecord(String token) {
-//    if(!tokenCash.containsKey(token)){
-//      TokenRecord record = interactor.getTokenRecord(token);
-//      if(record == null){
-//        return null;
-//      }
-//      tokenCash.put(token,record);
-//    }
-//    return tokenCash.get(token);
-//  }
+  public static TokenRecord getTokenRecord(String token) {
+    if(!tokenCash.containsKey(token)){
+      TokenRecord record = interactor.getTokenRecord(token);
+      if(record == null){
+        return null;
+      }
+      tokenCash.put(token,record);
+    }
+    return tokenCash.get(token);
+  }
 
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
     if(isAdmin){
