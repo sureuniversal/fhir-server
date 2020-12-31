@@ -6,12 +6,15 @@ import java.sql.*;
 
 public class DBInteractorPostgres implements IDBInteractor {
 
+  private final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(DBInteractorPostgres.class);
+
   private Statement postgresStm;
+  private Connection postgresCon;
 
   public DBInteractorPostgres(String connectionString, String postgresUser, String postgresPass) {
     try {
       Class.forName("org.postgresql.Driver");
-      Connection postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
+      postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
       postgresStm = postgresCon.createStatement();
     } catch (SQLException | ClassNotFoundException e) {
       e.printStackTrace();
@@ -21,6 +24,7 @@ public class DBInteractorPostgres implements IDBInteractor {
   @Override
   public TokenRecord getTokenRecord(String token) {
     try {
+      postgresStm = postgresCon.createStatement();
       ResultSet resultSet = postgresStm.executeQuery(
         "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin " +
           "from public.oauthaccesstoken o " +
@@ -31,9 +35,9 @@ public class DBInteractorPostgres implements IDBInteractor {
       boolean isPractitioner = resultSet.getBoolean("ispractitioner");
       long issued = -1;
       long expire = -1;
+      postgresStm.close();
       return new TokenRecord(userId, token, isPractitioner, issued, expire);
     } catch (SQLException e) {
-      org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(DBInteractorPostgres.class);
       ourLog.error("postgreSQL error:", e);
       return null;
     }
