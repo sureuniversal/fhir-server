@@ -82,8 +82,6 @@ public class CustomLoggingInterceptor {
 
   @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
   public void requestPreHandled(ServletRequestDetails theRequestDetails){
-    if(!theRequestDetails.getUserData().containsKey("time_start_"+theRequestDetails.getRequestId()))
-      theRequestDetails.getUserData().put("time_start_"+theRequestDetails.getRequestId(),System.currentTimeMillis());
     // Perform any string substitutions from the message format
     StringLookup lookup = new MyLookup(theRequestDetails.getServletRequest(), theRequestDetails);
     StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
@@ -102,7 +100,6 @@ public class CustomLoggingInterceptor {
     // Actually log the line
     String line = subs.replace(myMessageFormat);
     myLogger.info(line);
-    myLogger.info("{}: overall time:{}",theRequestDetails.getRequestId(),System.currentTimeMillis() - (long)(theRequestDetails.getUserData().get("time_start_"+theRequestDetails.getRequestId())));
   }
 
   /**
