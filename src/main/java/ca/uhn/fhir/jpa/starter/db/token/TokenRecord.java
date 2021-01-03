@@ -41,7 +41,6 @@ public class TokenRecord {
   }
 
   public boolean isRecordExpired(){
-    org.slf4j.LoggerFactory.getLogger("isRecordExpired(token)").info("Record life: {}",System.currentTimeMillis()-(recordTtl-ttl));
     return ((recordTtl - System.currentTimeMillis()) < 0);
   }
 }
