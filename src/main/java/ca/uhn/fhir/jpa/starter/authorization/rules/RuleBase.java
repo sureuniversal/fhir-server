@@ -71,7 +71,6 @@ public abstract class RuleBase {
   }
 
   public boolean isRecordExpired(){
-    org.slf4j.LoggerFactory.getLogger("isRecordExpired(rule)").info("Record life: {}",System.currentTimeMillis()-(recordTtl-ttl));
     return ((recordTtl - System.currentTimeMillis()) < 0);
   }
 
