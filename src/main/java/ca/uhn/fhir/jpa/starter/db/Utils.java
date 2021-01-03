@@ -15,7 +15,8 @@ import java.util.Map;
 public class Utils {
 
   private final static IDBInteractor interactor;
-  private final static Map<String,TokenRecord> tokenCash = new HashMap<>();
+  private final static Map<String,TokenRecord> tokenCache = new HashMap<>();
+  private final static Map<String,RuleBase> ruleCache = new HashMap<>();
 
   static {
       String connectionString = System.getenv("FHIR_PG_TOKEN_URL");
@@ -25,14 +26,14 @@ public class Utils {
   }
 
   public static TokenRecord getTokenRecord(String token) {
-    if(!tokenCash.containsKey(token)){
+    if(!tokenCache.containsKey(token)){
       TokenRecord record = interactor.getTokenRecord(token);
       if(record == null){
         return null;
       }
-      tokenCash.put(token,record);
+      tokenCache.put(token,record);
     }
-    return tokenCash.get(token);
+    return tokenCache.get(token);
   }
 
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
@@ -45,33 +46,73 @@ public class Utils {
     }
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
+    if(ruleCache.containsKey(authHeader+'-'+compartmentName)){
+      return ruleCache.get(authHeader+'-'+compartmentName);
+    }
+    RuleBase res;
     switch (compartmentName) {
       case "Flag":
-        return new FlagRules(authHeader);
+        res = new FlagRules(authHeader);
+        break;
       case "Observation":
-        return new ObservationRules(authHeader);
+        res = new ObservationRules(authHeader);
+        break;
       case "CareTeam":
-        return new CareTeamRules(authHeader);
+        res = new CareTeamRules(authHeader);
+        break;
       case "Patient":
-        return new PatientRules(authHeader);
+        res = new PatientRules(authHeader);
+        break;
       case "Practitioner":
-        return new PractitionerRules(authHeader);
+        res = new PractitionerRules(authHeader);
+        break;
       case "DeviceMetric":
         if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
-          return new AdminRules(authHeader);
+          res = new AdminRules(authHeader);
+        } else {
+          res = new DeviceMetricRules(authHeader);
         }
-        return new DeviceMetricRules(authHeader);
+        break;
       case "Device":
         if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.SEARCH_TYPE){
-          return new AdminRules(authHeader);
+          res = new AdminRules(authHeader);
+        } else {
+          res = new DeviceRules(authHeader);
         }
-        return new DeviceRules(authHeader);
+        break;
       case "metadata":
-        return new MetadataRules(authHeader);
+        res = new MetadataRules(authHeader);
+        break;
       case "PractitionerRole":
-        return new PractitionerRoleRules(authHeader);
+        res = new PractitionerRoleRules(authHeader);
+        break;
       default:
-        return null;
+        res = null;
+        break;
+    }
+    ruleCache.put(authHeader+'-'+compartmentName,res);
+    return res;
+  }
+  public static void cleanTokenCache(){
+    try {
+      tokenCache.forEach((k, v) -> {
+        if (v.isRecordExpired()) {
+          tokenCache.remove(k);
+        }
+      });
+    } catch (java.util.ConcurrentModificationException e) {
+      org.slf4j.LoggerFactory.getLogger("cleanTokenCache").info("caught exeption:java.util.ConcurrentModificationException");
+    }
+  }
+  public static void cleanRuleCache() {
+    try {
+      ruleCache.forEach((k, v) -> {
+        if (v.isRecordExpired()) {
+          ruleCache.remove(k);
+        }
+      });
+    } catch (java.util.ConcurrentModificationException e) {
+      org.slf4j.LoggerFactory.getLogger("cleanRuleCache").info("caught exeption:java.util.ConcurrentModificationException");
     }
   }
 }
