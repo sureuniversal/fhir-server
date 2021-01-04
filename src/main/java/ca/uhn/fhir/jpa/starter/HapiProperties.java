@@ -47,6 +47,7 @@ public class HapiProperties {
   static final String HAPI_PROPERTIES = "hapi.properties";
   static final String LOGGER_ERROR_FORMAT = "logger.error_format";
   static final String LOGGER_FORMAT = "logger.format";
+  static final String LOGGER_INCOMING_FORMAT = "logger.incoming.format";
   static final String LOGGER_LOG_EXCEPTIONS = "logger.log_exceptions";
   static final String LOGGER_NAME = "logger.name";
   static final String MAX_FETCH_SIZE = "max_fetch_size";
@@ -283,6 +284,14 @@ public class HapiProperties {
     return HapiProperties.getProperty(LOGGER_FORMAT, "Path[${servletPath}] Source[${requestHeader.x-forwarded-for}] Operation[${operationType} ${operationName} ${idOrResourceName}] UA[${requestHeader.user-agent}] Params[${requestParameters}] ResponseEncoding[${responseEncodingNoDefault}]");
   }
 
+  public static String getLoggerIncomingFormat() {
+    if(System.getenv("LOGGER_INCOMING_FORMAT") != null){
+      return System.getenv("LOGGER_INCOMING_FORMAT");
+    }
+
+    return HapiProperties.getProperty(LOGGER_INCOMING_FORMAT, "${operationType} - ${idOrResourceName} - ${requestId}");
+  }
+
   public static String getLoggerErrorFormat() {
     if(System.getenv("LOGGER_ERROR_FORMAT") != null){
       return System.getenv("LOGGER_ERROR_FORMAT");
@@ -496,6 +505,13 @@ public class HapiProperties {
 
   public static boolean getBulkExportEnabled() {
     return HapiProperties.getBooleanProperty(BULK_EXPORT_ENABLED, true);
+  }
+  public static long getCacheTtl(long defaultValue){
+    try{
+      return Long.parseLong(System.getenv("CACHE_TTL"));
+    } catch (Exception e) {
+      return defaultValue;
+    }
   }
 }
 

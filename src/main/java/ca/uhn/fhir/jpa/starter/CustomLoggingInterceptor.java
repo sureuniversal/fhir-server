@@ -55,7 +55,7 @@ public class CustomLoggingInterceptor {
   private boolean myLogExceptions = true;
   private Logger myLogger = ourLog;
   private String myMessageFormat = "${operationType} - ${idOrResourceName}";
-  private String myIncomingFormat = "${operationType} - ${idOrResourceName}";
+  private String myIncomingFormat = "${operationType} - ${idOrResourceName} - ${requestId}";
 
 
   /**

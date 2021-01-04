@@ -54,11 +54,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("access Denied")
         .build();
     }
-
-    if (isPractitioner) {
-      ruleBase.addResourcesByPractitioner(userId);
-    } else {
-      ruleBase.addResource(userId);
+    if (!ruleBase.isBuilt()) {
+      if (isPractitioner) {
+        ruleBase.addResourcesByPractitioner(userId);
+      } else {
+        ruleBase.addResource(userId);
+      }
+      ruleBase.built();
     }
 
     ruleBase.setUserId(userId);
