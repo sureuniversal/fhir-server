@@ -54,14 +54,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .denyAll("access Denied")
         .build();
     }
-    if (!ruleBase.isBuilt()) {
+
       if (isPractitioner) {
         ruleBase.addResourcesByPractitioner(userId);
       } else {
         ruleBase.addResource(userId);
       }
-      ruleBase.built();
-    }
 
     ruleBase.setUserId(userId);
     List<IAuthRule> rule;

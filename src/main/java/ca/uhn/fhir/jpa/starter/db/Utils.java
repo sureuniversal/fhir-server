@@ -44,9 +44,7 @@ public class Utils {
     }
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    if(ruleCache.containsKey(authHeader+'-'+compartmentName)){
-      return ruleCache.get(authHeader+'-'+compartmentName);
-    }
+
     RuleBase res;
     switch (compartmentName) {
       case "Flag":
@@ -90,27 +88,5 @@ public class Utils {
     }
     ruleCache.put(authHeader+'-'+compartmentName,res);
     return res;
-  }
-  public static void cleanTokenCache(){
-    try {
-      tokenCache.forEach((k, v) -> {
-        if (v.isRecordExpired()) {
-          tokenCache.remove(k);
-        }
-      });
-    } catch (java.util.ConcurrentModificationException e) {
-      org.slf4j.LoggerFactory.getLogger("cleanTokenCache").info("caught exeption:java.util.ConcurrentModificationException");
-    }
-  }
-  public static void cleanRuleCache() {
-    try {
-      ruleCache.forEach((k, v) -> {
-        if (v.isRecordExpired()) {
-          ruleCache.remove(k);
-        }
-      });
-    } catch (java.util.ConcurrentModificationException e) {
-      org.slf4j.LoggerFactory.getLogger("cleanRuleCache").info("caught exeption:java.util.ConcurrentModificationException");
-    }
   }
 }
