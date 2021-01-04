@@ -55,11 +55,11 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
 
-      if (isPractitioner) {
-        ruleBase.addResourcesByPractitioner(userId);
-      } else {
-        ruleBase.addResource(userId);
-      }
+    if (isPractitioner) {
+      ruleBase.addResourcesByPractitioner(userId);
+    } else {
+      ruleBase.addResource(userId);
+    }
 
     ruleBase.setUserId(userId);
     List<IAuthRule> rule;
