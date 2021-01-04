@@ -186,7 +186,6 @@ public class JpaRestfulServer extends RestfulServer {
     loggingInterceptor.setLoggerName(HapiProperties.getLoggerName());
     loggingInterceptor.setMessageFormat(HapiProperties.getLoggerFormat());
     loggingInterceptor.setErrorMessageFormat(HapiProperties.getLoggerErrorFormat());
-    loggingInterceptor.setIncomingFormat(HapiProperties.getLoggerIncomingFormat());
     loggingInterceptor.setLogExceptions(HapiProperties.getLoggerLogExceptions());
     //loggingInterceptor.setLogRequestSummary(true);
     //loggingInterceptor.setLogRequestBody(true);
@@ -345,14 +344,7 @@ public class JpaRestfulServer extends RestfulServer {
       registerProvider(appCtx.getBean(BulkDataExportProvider.class));
     }
 
-    //PatientAndAdminAuthorizationInterceptor patientAndAdminAuthorizationInterceptor = new PatientAndAdminAuthorizationInterceptor();
-    //registerInterceptor(patientAndAdminAuthorizationInterceptor);
     registerProvider(new SmartConfigurationProvider());
-
-    CleanCacheInterceptor cleanCacheInterceptor = new CleanCacheInterceptor();
-    registerInterceptor(cleanCacheInterceptor);
-
-
   }
 
 }
