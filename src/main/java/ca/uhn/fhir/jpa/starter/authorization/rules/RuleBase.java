@@ -23,7 +23,7 @@ public abstract class RuleBase {
     authHeader = auth;
     this.recordTtl = System.currentTimeMillis() + ttl;
   }
-  
+
   public abstract List<IAuthRule> handleGet();
 
   public abstract List<IAuthRule> handlePost();
