@@ -1,6 +1,6 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
-import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -9,7 +9,6 @@ import org.hl7.fhir.r4.model.IdType;
 import java.util.List;
 
 public abstract class RuleBase {
-  private static final long ttl = HapiProperties.getCacheTtl(240000);
   final long recordTtl;
 
   protected String denyMessage;
@@ -21,7 +20,7 @@ public abstract class RuleBase {
 
   public RuleBase(String auth) {
     authHeader = auth;
-    this.recordTtl = System.currentTimeMillis() + ttl;
+    this.recordTtl = System.currentTimeMillis() + Utils.ttl;
   }
   
   public abstract List<IAuthRule> handleGet();
