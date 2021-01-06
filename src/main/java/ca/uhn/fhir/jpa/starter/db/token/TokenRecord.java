@@ -1,9 +1,8 @@
 package ca.uhn.fhir.jpa.starter.db.token;
 
-import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.jpa.starter.db.Utils;
 
 public class TokenRecord {
-  private static final long ttl = HapiProperties.getCacheTtl(240000);
   final String id;
   final String token;
   final boolean is_practitioner;
@@ -17,7 +16,7 @@ public class TokenRecord {
     this.is_practitioner = is_practitioner;
     this.issuedDate = issuedDate;
     this.expiresIn = expiresIn;
-    this.recordTtl = System.currentTimeMillis() + ttl;
+    this.recordTtl = System.currentTimeMillis() + Utils.ttl;
   }
 
   public String getId() {
