@@ -9,12 +9,13 @@ import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Utils {
 
   private final static IDBInteractor interactor;
-  private final static Map<String,TokenRecord> tokenCache = new HashMap<>();
-  private final static Map<String,RuleBase> ruleCache = new HashMap<>();
+  private final static Map<String,TokenRecord> tokenCache = new ConcurrentHashMap<>();
+  private final static Map<String,RuleBase> ruleCache = new ConcurrentHashMap<>();
   public static final long ttl = HapiProperties.getCacheTtl(240000);
   public static Timer cacheTimer = new Timer("cache Timer",true);
 
@@ -38,14 +39,17 @@ public class Utils {
   }
 
   public static TokenRecord getTokenRecord(String token) {
-    if(!tokenCache.containsKey(token)){
-      TokenRecord record = interactor.getTokenRecord(token);
-      if(record == null){
-        return null;
+    synchronized (tokenCache) {
+      if (tokenCache.containsKey(token)) {
+        return tokenCache.get(token);
       }
-      tokenCache.put(token,record);
     }
-    return tokenCache.get(token);
+    TokenRecord record = interactor.getTokenRecord(token);
+    if(record == null){
+      return null;
+    }
+    tokenCache.put(token,record);
+    return record;
   }
 
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
@@ -58,8 +62,10 @@ public class Utils {
     }
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    if(ruleCache.containsKey(authHeader+'-'+compartmentName)){
-      return ruleCache.get(authHeader+'-'+compartmentName);
+    synchronized (ruleCache) {
+      if (ruleCache.containsKey(authHeader + '-' + compartmentName)) {
+        return ruleCache.get(authHeader + '-' + compartmentName);
+      }
     }
     RuleBase res;
     switch (compartmentName) {
