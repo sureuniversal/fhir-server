@@ -68,4 +68,16 @@ public abstract class RuleBase {
   {
     this.userId = userId;
   }
+
+  public boolean isRecordExpired(){
+    return ((recordTtl - System.currentTimeMillis()) < 0);
+  }
+
+  public boolean isBuilt(){
+    return built;
+  }
+
+  public void built(){
+    built = true;
+  }
 }
