@@ -349,9 +349,6 @@ public class JpaRestfulServer extends RestfulServer {
     //registerInterceptor(patientAndAdminAuthorizationInterceptor);
     registerProvider(new SmartConfigurationProvider());
 
-    CleanCacheInterceptor cleanCacheInterceptor = new CleanCacheInterceptor();
-    registerInterceptor(cleanCacheInterceptor);
-
 
   }
 

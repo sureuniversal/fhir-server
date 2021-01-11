@@ -1,5 +1,6 @@
 package ca.uhn.fhir.jpa.starter.db;
 
+import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.jpa.starter.authorization.rules.*;
 import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorPostgres;
 import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
@@ -7,31 +8,54 @@ import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Utils {
 
   private final static IDBInteractor interactor;
-  private final static Map<String,TokenRecord> tokenCache = new HashMap<>();
-  private final static Map<String,RuleBase> ruleCache = new HashMap<>();
+  private final static Map<String,TokenRecord> tokenCache = new ConcurrentHashMap<>();
+  private final static Lock tokenCacheLock = new ReentrantLock();
+  private final static Map<String,RuleBase> ruleCache = new ConcurrentHashMap<>();
+  private final static Lock ruleCacheLock = new ReentrantLock();
+  public static final long ttl = HapiProperties.getCacheTtl(240000);
+  public static Timer cacheTimer = new Timer("cache Timer",true);
 
   static {
       String connectionString = System.getenv("FHIR_PG_TOKEN_URL");
       String postgresUser = System.getenv("FHIR_PG_TOKEN_USER_NAME");
       String postgresPass = System.getenv("FHIR_PG_TOKEN_PASSWORD");
       interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
+      cacheTimer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            cleanRuleCache();
+            cleanTokenCache();
+          } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger("cacheTimer").error("cacheTimer:", e);
+          }
+        }
+      },ttl,ttl);
+
   }
 
   public static TokenRecord getTokenRecord(String token) {
-    if(!tokenCache.containsKey(token)){
-      TokenRecord record = interactor.getTokenRecord(token);
-      if(record == null){
-        return null;
+    TokenRecord record;
+    tokenCacheLock.lock();
+    try {
+      if (tokenCache.containsKey(token)) {
+        record = tokenCache.get(token);
+      } else {
+        record = interactor.getTokenRecord(token);
+        tokenCache.put(token,record);
       }
-      tokenCache.put(token,record);
+    } finally {
+      tokenCacheLock.unlock();
     }
-    return tokenCache.get(token);
+    return record;
   }
 
   public static RuleBase rulesFactory(RequestDetails theRequestDetails, String authHeader,boolean isAdmin) {
@@ -44,8 +68,13 @@ public class Utils {
     }
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    if(ruleCache.containsKey(authHeader+'-'+compartmentName)){
-      return ruleCache.get(authHeader+'-'+compartmentName);
+    ruleCacheLock.lock();
+    try {
+      if (ruleCache.containsKey(authHeader + '-' + compartmentName)) {
+        return ruleCache.get(authHeader + '-' + compartmentName);
+      }
+    } finally {
+      ruleCacheLock.unlock();
     }
     RuleBase res;
     switch (compartmentName) {
@@ -88,29 +117,41 @@ public class Utils {
         res = null;
         break;
     }
-    ruleCache.put(authHeader+'-'+compartmentName,res);
+    ruleCacheLock.lock();
+    try {
+      ruleCache.put(authHeader+'-'+compartmentName,res);
+    } finally {
+      ruleCacheLock.unlock();
+    }
     return res;
   }
   public static void cleanTokenCache(){
+    List<String> removeList = new ArrayList<>();
+    tokenCache.forEach((k, v) -> {
+      if (v.isRecordExpired()) {
+        removeList.add(k);
+      }
+    });
+    tokenCacheLock.lock();
     try {
-      tokenCache.forEach((k, v) -> {
-        if (v.isRecordExpired()) {
-          tokenCache.remove(k);
-        }
-      });
-    } catch (java.util.ConcurrentModificationException e) {
-      org.slf4j.LoggerFactory.getLogger("cleanTokenCache").info("caught exeption:java.util.ConcurrentModificationException");
+      removeList.forEach(tokenCache::remove);
+    } finally {
+      tokenCacheLock.unlock();
     }
+
   }
   public static void cleanRuleCache() {
+    List<String> removeList = new ArrayList<>();
+    ruleCache.forEach((k, v) -> {
+      if (v.isRecordExpired()) {
+        removeList.add(k);
+      }
+    });
+    ruleCacheLock.lock();
     try {
-      ruleCache.forEach((k, v) -> {
-        if (v.isRecordExpired()) {
-          ruleCache.remove(k);
-        }
-      });
-    } catch (java.util.ConcurrentModificationException e) {
-      org.slf4j.LoggerFactory.getLogger("cleanRuleCache").info("caught exeption:java.util.ConcurrentModificationException");
+      removeList.forEach(ruleCache::remove);
+    } finally {
+      ruleCacheLock.unlock();
     }
   }
 }
