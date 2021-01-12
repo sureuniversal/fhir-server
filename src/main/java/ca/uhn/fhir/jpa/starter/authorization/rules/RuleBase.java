@@ -9,7 +9,7 @@ import org.hl7.fhir.r4.model.IdType;
 import java.util.List;
 
 public abstract class RuleBase {
-  final long recordTtl;
+  public final long recordTtl;
 
   protected String denyMessage;
   protected IIdType practitionerId = null;
