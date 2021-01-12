@@ -313,7 +313,7 @@ public class HapiProperties {
   }
 
   public static String getDataSourceUrl() {
-    return System.getenv("FHIR_PG_DATASOURCE_URL");
+    return System.getenv("FHIR_PG_DATASOURCE_URL") + "/fhir";
     //return HapiProperties.getProperty(DATASOURCE_URL, "jdbc:derby:directory:target/jpaserver_derby_files;create=true");
   }
 

@@ -1,20 +1,39 @@
 package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
-import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
 import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.starter.db.Utils;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
-import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
+  private final static Map ruleCache = new ConcurrentHashMap<String,  AuthRulesWrapper> ();
+  private final static Map tokenCache = new ConcurrentHashMap<String, TokenRecord>();
+  public static Timer cacheTimer = new Timer("cache Timer",true);
+
+  static
+  {
+    cacheTimer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        try {
+          cleanRuleCache();
+          cleanTokenCache();
+        } catch (Exception e) {
+          org.slf4j.LoggerFactory.getLogger("cacheTimer").error("cacheTimer:", e);
+        }
+      }
+    },
+      Utils.getCacheTTL(),
+      Utils.getCacheTTL());
+  }
 
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
@@ -32,40 +51,58 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     }
 
     String token = authHeader.replace("Bearer ", "");
-    TokenRecord tokenRecord = Utils.getTokenRecord(token);
-    if (tokenRecord == null) {
+    TokenRecord tokenRecord = getCachedTokenIfExists(token);
+    if (tokenRecord == null)
+    {
+      tokenRecord = Utils.getTokenRecord(token);
+      if (tokenRecord == null) {
+        return new RuleBuilder()
+          .denyAll("invalid token")
+          .build();
+      }
+
+      if(tokenRecord.is_practitioner()){
+        tokenRecord.isAdmin = Search.isPractitionerAdmin(tokenRecord.getId());
+      }
+
+      tokenCache.put(token, tokenRecord);
+    }
+
+    var compartmentName = theRequestDetails.getRequestPath().split("/")[0];
+    var operation = theRequestDetails.getRequestType();
+    var cacheKey = authHeader + '-' + compartmentName + '-' + operation;
+    var cachedRule = getCachedRuleIfExists(cacheKey);
+    if (cachedRule != null)
+    {
+      return cachedRule.rules;
+    }
+
+    boolean isAdmin = tokenRecord.isAdmin;
+    boolean isPractitioner = tokenRecord.is_practitioner();
+    String userId = tokenRecord.getId();
+
+    if (isAdmin)
+    {
       return new RuleBuilder()
-        .denyAll("invalid token")
+        .allowAll("Admin")
         .build();
     }
 
-    String userId = tokenRecord.getId();
-
-    boolean isAdmin = false;
-    boolean isPractitioner = tokenRecord.is_practitioner();
-
-    if(isPractitioner){
-      isAdmin = Search.isPractitionerAdmin(userId);
-    }
-
-    RuleBase ruleBase = Utils.rulesFactory(theRequestDetails, authHeader, isAdmin);
+    var ruleBase =  Utils.rulesFactory(theRequestDetails, authHeader);
     if (ruleBase == null) {
       return new RuleBuilder()
         .denyAll("access Denied")
         .build();
     }
-    if (!ruleBase.isBuilt()) {
-      if (isPractitioner) {
-        ruleBase.addResourcesByPractitioner(userId);
-      } else {
-        ruleBase.addResource(userId);
-      }
-      ruleBase.built();
+
+    if (isPractitioner) {
+      ruleBase.addResourcesByPractitioner(userId);
+    } else {
+      ruleBase.addResource(userId);
     }
 
     ruleBase.setUserId(userId);
     List<IAuthRule> rule;
-    RequestTypeEnum operation = theRequestDetails.getRequestType();
     switch (operation) {
       case TRACE:
       case TRACK:
@@ -85,6 +122,65 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         throw new IllegalStateException("Unexpected value: " + operation);
     }
 
+    ruleCache.put(cacheKey, new AuthRulesWrapper(rule));
     return rule;
+  }
+
+  public static class CacheRecord{
+    public long recordTtl;
+    public boolean isRecordExpired(){
+      return ((recordTtl - System.currentTimeMillis()) < 0);
+    }
+  }
+
+  private class AuthRulesWrapper extends CacheRecord
+  {
+    public List<IAuthRule> rules;
+    public AuthRulesWrapper(List<IAuthRule> rules)
+    {
+      this.rules = rules;
+      this.recordTtl = System.currentTimeMillis() + Utils.getCacheTTL();
+    }
+  }
+
+  private static TokenRecord getCachedTokenIfExists(String cacheKey) {
+    return  (TokenRecord) getCacheEntry(tokenCache, cacheKey);
+  }
+
+  private static AuthRulesWrapper getCachedRuleIfExists(String cacheKey) {
+    return (AuthRulesWrapper) getCacheEntry(ruleCache, cacheKey);
+  }
+
+  private static CacheRecord getCacheEntry(Map<String, CacheRecord> cache, String cacheKey){
+    var cachedRule = cache.get(cacheKey);
+    if (cachedRule != null) {
+      var recordTtl = cachedRule.recordTtl;
+      if ((recordTtl - System.currentTimeMillis()) > 999) {
+        return cachedRule;
+      } else {
+        cache.remove(recordTtl);
+      }
+    }
+
+    return null;
+  }
+
+  public static void cleanTokenCache(){
+    cleanCache(tokenCache);
+  }
+
+  public static void cleanRuleCache() {
+    cleanCache(ruleCache);
+  }
+
+  public static void cleanCache(Map<String, CacheRecord> cache){
+    List<String> removeList = new ArrayList<>();
+    cache.forEach((k, v) -> {
+      if (v.isRecordExpired()) {
+        removeList.add(k);
+      }
+    });
+
+    removeList.forEach(cache::remove);
   }
 }
