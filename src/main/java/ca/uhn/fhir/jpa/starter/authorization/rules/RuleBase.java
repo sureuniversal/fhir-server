@@ -9,7 +9,6 @@ import org.hl7.fhir.r4.model.IdType;
 import java.util.List;
 
 public abstract class RuleBase {
-  public final long recordTtl;
 
   protected String denyMessage;
   protected IIdType practitionerId = null;
@@ -20,7 +19,6 @@ public abstract class RuleBase {
 
   public RuleBase(String auth) {
     authHeader = auth;
-    this.recordTtl = System.currentTimeMillis() + Utils.ttl;
   }
   
   public abstract List<IAuthRule> handleGet();
@@ -68,15 +66,4 @@ public abstract class RuleBase {
     this.userId = userId;
   }
 
-  public boolean isRecordExpired(){
-    return ((recordTtl - System.currentTimeMillis()) < 0);
-  }
-
-  public boolean isBuilt(){
-    return built;
-  }
-
-  public void built(){
-    built = true;
-  }
 }
