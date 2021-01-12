@@ -1,5 +1,4 @@
 package ca.uhn.fhir.jpa.starter.db;
-
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.jpa.starter.authorization.rules.*;
 import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorPostgres;
@@ -7,11 +6,8 @@ import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Utils {
 
