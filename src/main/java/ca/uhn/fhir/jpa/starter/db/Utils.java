@@ -17,9 +17,7 @@ public class Utils {
 
   private final static IDBInteractor interactor;
   private final static Map<String,TokenRecord> tokenCache = new ConcurrentHashMap<>();
-  private final static Lock tokenCacheLock = new ReentrantLock();
   private final static Map<String,RuleBase> ruleCache = new ConcurrentHashMap<>();
-  private final static Lock ruleCacheLock = new ReentrantLock();
   public static final long ttl = HapiProperties.getCacheTtl(240000);
   public static Timer cacheTimer = new Timer("cache Timer",true);
 
@@ -39,22 +37,16 @@ public class Utils {
           }
         }
       },ttl,ttl);
-
   }
 
   public static TokenRecord getTokenRecord(String token) {
-    TokenRecord record;
-    tokenCacheLock.lock();
-    try {
-      if (tokenCache.containsKey(token)) {
-        record = tokenCache.get(token);
-      } else {
-        record = interactor.getTokenRecord(token);
-        tokenCache.put(token,record);
-      }
-    } finally {
-      tokenCacheLock.unlock();
+    var record = tokenCache.get(token);
+    if (record == null)
+    {
+      record = interactor.getTokenRecord(token);
+      tokenCache.put(token,record);
     }
+
     return record;
   }
 
@@ -68,14 +60,21 @@ public class Utils {
     }
 
     String compartmentName = theRequestDetails.getRequestPath().split("/")[0];
-    ruleCacheLock.lock();
-    try {
-      if (ruleCache.containsKey(authHeader + '-' + compartmentName)) {
-        return ruleCache.get(authHeader + '-' + compartmentName);
+    var cacheKey = authHeader + '-' + compartmentName;
+    var cachedRule = ruleCache.get(cacheKey);
+    if (cachedRule != null)
+    {
+      var recordTtl = cachedRule.recordTtl;
+      if ((recordTtl - System.currentTimeMillis()) > 999)
+      {
+        return cachedRule;
       }
-    } finally {
-      ruleCacheLock.unlock();
+      else
+      {
+        ruleCache.remove(recordTtl);
+      }
     }
+
     RuleBase res;
     switch (compartmentName) {
       case "Flag":
@@ -117,14 +116,11 @@ public class Utils {
         res = null;
         break;
     }
-    ruleCacheLock.lock();
-    try {
-      ruleCache.put(authHeader+'-'+compartmentName,res);
-    } finally {
-      ruleCacheLock.unlock();
-    }
+
+    ruleCache.put(cacheKey, res);
     return res;
   }
+
   public static void cleanTokenCache(){
     List<String> removeList = new ArrayList<>();
     tokenCache.forEach((k, v) -> {
@@ -132,14 +128,10 @@ public class Utils {
         removeList.add(k);
       }
     });
-    tokenCacheLock.lock();
-    try {
-      removeList.forEach(tokenCache::remove);
-    } finally {
-      tokenCacheLock.unlock();
-    }
 
+    removeList.forEach(tokenCache::remove);
   }
+
   public static void cleanRuleCache() {
     List<String> removeList = new ArrayList<>();
     ruleCache.forEach((k, v) -> {
@@ -147,11 +139,7 @@ public class Utils {
         removeList.add(k);
       }
     });
-    ruleCacheLock.lock();
-    try {
-      removeList.forEach(ruleCache::remove);
-    } finally {
-      ruleCacheLock.unlock();
-    }
+
+   removeList.forEach(ruleCache::remove);
   }
 }

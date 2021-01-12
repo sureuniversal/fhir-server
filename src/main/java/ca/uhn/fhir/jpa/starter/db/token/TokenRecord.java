@@ -8,7 +8,7 @@ public class TokenRecord {
   final boolean is_practitioner;
   final long issuedDate;
   final long expiresIn;
-  final long recordTtl;
+  public long recordTtl;
 
   public TokenRecord(String id, String token, boolean is_practitioner, long issuedDate, long expiresIn) {
     this.id = id;
