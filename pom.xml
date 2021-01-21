@@ -303,8 +303,8 @@
 
     <build>
 
-        <!-- Tells Maven to name the generated WAR file as ROOT.war -->
-        <finalName>ROOT</finalName>
+        <!-- Tells Maven to name the generated WAR file as hapi-fhir-jpaserver.war -->
+        <finalName>hapi-fhir-jpaserver</finalName>
 
         <plugins>
             <plugin>
@@ -343,8 +343,6 @@
                 <version>3.8.1</version>
                 <configuration>
                     <release>8</release>
-                    <source>8</source>
-                    <target>8</target>
                 </configuration>
             </plugin>
 

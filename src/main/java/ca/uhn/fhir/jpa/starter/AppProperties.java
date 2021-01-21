@@ -439,7 +439,7 @@ public class AppProperties {
 
     private String id = "home";
     private String name = "Local Tester";
-    private String server_address = "http://localhost:8080/fhir";
+    private String server_address = "http://http://localhost:8080/hapi-fhir-jpaserver/fhir";
     private Boolean refuse_to_fetch_third_party_urls = true;
     private FhirVersionEnum fhir_version = FhirVersionEnum.R4;
 

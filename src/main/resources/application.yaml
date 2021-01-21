@@ -1,9 +1,9 @@
 spring:
-datasource:
-  url: 'jdbc:postgresql://fhir-db-dev.cbvy9h3o4oj9.eu-central-1.rds.amazonaws.com/fhir'
-  username: postgres
-  password: QvZP25ycU5bSPCVX
-  driverClassName: org.postgresql.Driver
+  datasource:
+    url: 'jdbc:postgresql://fhir-db-dev.cbvy9h3o4oj9.eu-central-1.rds.amazonaws.com/fhir'
+    username: postgres
+    password: QvZP25ycU5bSPCVX
+    driverClassName: org.postgresql.Driver
 
   profiles:
     ### This is the FHIR version. Choose between, dstu2, dstu3, r4 or r5
@@ -90,7 +90,7 @@ hapi:
       -
           id: home
           name: Local Tester
-          server_address: 'http://localhost:8080/fhir'
+          server_address: 'http://localhost:8080/hapi-fhir-jpaserver/fhir'
           refuse_to_fetch_third_party_urls: false
           fhir_version: R4
       -
