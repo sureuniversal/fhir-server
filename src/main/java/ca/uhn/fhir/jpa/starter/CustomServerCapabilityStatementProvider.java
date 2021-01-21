@@ -1,11 +1,11 @@
 package ca.uhn.fhir.jpa.starter;
 
-import ca.uhn.fhir.jpa.dao.DaoConfig;
-import ca.uhn.fhir.jpa.dao.IFhirSystemDao;
+
+import ca.uhn.fhir.jpa.api.config.DaoConfig;
+import ca.uhn.fhir.jpa.api.dao.IFhirSystemDao;
 import ca.uhn.fhir.jpa.provider.r4.JpaConformanceProviderR4;
-import ca.uhn.fhir.model.primitive.UriDt;
+import ca.uhn.fhir.jpa.searchparam.registry.ISearchParamRegistry;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.server.RestfulServerConfiguration;
 import org.hl7.fhir.r4.model.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,8 +14,8 @@ import java.util.List;
 public class CustomServerCapabilityStatementProvider extends JpaConformanceProviderR4 {
 
 
-  public CustomServerCapabilityStatementProvider(JpaRestfulServer jpaRestfulServer, IFhirSystemDao<Bundle, Meta> systemDao, DaoConfig bean) {
-    super(jpaRestfulServer,systemDao,bean);
+  public CustomServerCapabilityStatementProvider(JpaRestfulServer jpaRestfulServer, IFhirSystemDao<Bundle, Meta> systemDao, DaoConfig bean, ISearchParamRegistry theSearchParamRegistry) {
+    super(jpaRestfulServer,systemDao,bean,theSearchParamRegistry);
   }
 
   @Override
