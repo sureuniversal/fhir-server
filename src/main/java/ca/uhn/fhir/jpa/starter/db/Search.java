@@ -13,22 +13,24 @@ import java.util.List;
 
 public class Search {
   protected static IGenericClient client = null;
-  static final String server;
+  private static FhirContext ctx;
 
-  static {
-    server = HapiProperties.getServerAddress();
+  public static void setServer(String server) {
+    Search.server = server;
   }
+
+  static String server;
 
   public static IGenericClient getClient() {
     return client;
   }
 
-  public static void setClient(IGenericClient client) {
-    Search.client = client;
+  public static void setClient() {
+    Search.client = ctx.newRestfulGenericClient(server);
   }
 
-  public static void setClientByContext(FhirContext ctx) {
-    Search.setClient(ctx.newRestfulGenericClient(server));
+  public static void setContext(FhirContext ctx) {
+    Search.ctx = ctx;
   }
 
   public static List<IIdType> getDeviceMetrics(List<IIdType> patientIds, String authHeader) {

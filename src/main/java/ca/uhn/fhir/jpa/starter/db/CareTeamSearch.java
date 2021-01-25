@@ -11,10 +11,10 @@ import java.util.List;
 public class CareTeamSearch extends Search{
   public static List<IIdType> GetAllowedCareTeamsForUser(String id)
   {
-    var allowedAsParticipant = getAllowedCareTeamAsParticipant(id);
-    var allowedAsSubject = getAllowedCareTeamAsSubject(id);
+    List<IIdType> allowedAsParticipant = getAllowedCareTeamAsParticipant(id);
+    List<IIdType> allowedAsSubject = getAllowedCareTeamAsSubject(id);
 
-    var result = new ArrayList<IIdType>();
+    ArrayList<IIdType> result = new ArrayList<IIdType>();
     result.addAll(allowedAsParticipant);
     result.addAll(allowedAsSubject);
 
@@ -54,14 +54,14 @@ public class CareTeamSearch extends Search{
       .execute();
 
     for (var item : bundle.getEntry()) {
-      var careTeam = (CareTeam) item.getResource();
-      var subjectId = careTeam.getSubject().getReferenceElement();
+      CareTeam careTeam = (CareTeam) item.getResource();
+      IIdType subjectId = careTeam.getSubject().getReferenceElement();
       retVal.add(subjectId);
 
-      var participants = careTeam.getParticipant();
+      List<CareTeam.CareTeamParticipantComponent> participants = careTeam.getParticipant();
       for (var participant : participants)
       {
-        var participantId = participant.getMember().getReferenceElement();
+        IIdType participantId = participant.getMember().getReferenceElement();
         retVal.add(participantId);
       }
     }

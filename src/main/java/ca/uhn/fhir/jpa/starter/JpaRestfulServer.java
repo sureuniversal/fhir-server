@@ -1,5 +1,8 @@
 package ca.uhn.fhir.jpa.starter;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.jpa.starter.db.Search;
+import ca.uhn.fhir.narrative.DefaultThymeleafNarrativeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -20,6 +23,24 @@ public class JpaRestfulServer extends BaseJpaRestfulServer {
   @Override
   protected void initialize() throws ServletException {
     super.initialize();
+
+    /*
+     * This server tries to dynamically generate narratives
+     */
+    FhirContext ctx = getFhirContext();
+    ctx.setNarrativeGenerator(new DefaultThymeleafNarrativeGenerator());
+    if(System.getenv("SERVER_BASE_ADDRESS") != null){
+      appProperties.setServer_address(System.getenv("SERVER_BASE_ADDRESS"));
+    } else {
+      appProperties.setServer_address("");
+    }
+
+    Search.setContext(ctx);
+    Search.setServer(appProperties.getServer_address());
+    Search.setClient();
+
+    TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
+    this.registerInterceptor(tokenValidationInterceptor);
 
     /*
      * Add some logging for each request
