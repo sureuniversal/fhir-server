@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: 'jdbc:postgresql://fhir-db-dev.cbvy9h3o4oj9.eu-central-1.rds.amazonaws.com/fhir'
-    username: postgres
-    password: QvZP25ycU5bSPCVX
+#    url: 'jdbc:postgresql://fhir-db-dev.cbvy9h3o4oj9.eu-central-1.rds.amazonaws.com/fhir'
+#    username: postgres
+#    password: QvZP25ycU5bSPCVX
     driverClassName: org.postgresql.Driver
 
   profiles:
@@ -94,9 +94,27 @@ hapi:
           refuse_to_fetch_third_party_urls: false
           fhir_version: R4
       -
+          id: ssl
+          name: Local Tester Https
+          server_address: 'https://localhost.sureuniversal-dbg.net:8443/hapi-fhir-jpaserver/fhir'
+          refuse_to_fetch_third_party_urls: false
+          fhir_version: R4
+      -
           id: global
           name: Global Tester
           server_address: "http://hapi.fhir.org/baseR4"
+          refuse_to_fetch_third_party_urls: false
+          fhir_version: R4
+      -
+          id: sure
+          name: Sure Fhir Tester
+          server_address: 'https://fhir-server.sureuniversal-dbg.net/hapi-fhir-jpaserver/fhir'
+          refuse_to_fetch_third_party_urls: false
+          fhir_version: R4
+      -
+          id: demo
+          name: Sure Fhir Demo Tester
+          server_address: 'https://fhir-server-demo.sureuniversal-dbg.net/hapi-fhir-jpaserver/fhir'
           refuse_to_fetch_third_party_urls: false
           fhir_version: R4
 #    validation:
