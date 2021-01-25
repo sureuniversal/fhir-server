@@ -10,6 +10,7 @@ import ca.uhn.fhir.jpa.subscription.channel.subscription.SubscriptionDeliveryHan
 import ca.uhn.fhir.jpa.subscription.match.deliver.email.IEmailSender;
 import ca.uhn.fhir.jpa.subscription.match.deliver.email.JavaMailEmailSender;
 import com.google.common.base.Strings;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.hl7.fhir.dstu2.model.Subscription;
 import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Driver;
 import java.util.Optional;
 
 /**
@@ -164,17 +167,21 @@ public class FhirServerConfigCommon {
    * <p>
    * A URL to a remote database could also be placed here, along with login credentials and other properties supported by BasicDataSource.
    */
-  /*@Bean(destroyMethod = "close")
+  @Bean(destroyMethod = "close")
   public BasicDataSource dataSource() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     BasicDataSource retVal = new BasicDataSource();
-    Driver driver = (Driver) Class.forName(HapiProperties.getDataSourceDriver()).getConstructor().newInstance();
+    Driver driver = (Driver) Class.forName("org.postgresql.Driver").getConstructor().newInstance();
     retVal.setDriver(driver);
     retVal.setUrl(HapiProperties.getDataSourceUrl());
     retVal.setUsername(HapiProperties.getDataSourceUsername());
     retVal.setPassword(HapiProperties.getDataSourcePassword());
     retVal.setMaxTotal(HapiProperties.getDataSourceMaxPoolSize());
+    ourLog.info("data source url:"+ HapiProperties.getDataSourceUrl());
+    ourLog.info("user name:"+ HapiProperties.getDataSourceUsername());
+    //ourLog.info("password::"+ HapiProperties.getDataSourcePassword());
+
     return retVal;
-  }*/
+  }
 
   @Lazy
   @Bean
