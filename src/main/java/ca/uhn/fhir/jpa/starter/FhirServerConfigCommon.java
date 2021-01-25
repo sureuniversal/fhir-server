@@ -167,6 +167,7 @@ public class FhirServerConfigCommon {
    * <p>
    * A URL to a remote database could also be placed here, along with login credentials and other properties supported by BasicDataSource.
    */
+/*
   @Bean(destroyMethod = "close")
   public BasicDataSource dataSource() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     BasicDataSource retVal = new BasicDataSource();
@@ -182,6 +183,7 @@ public class FhirServerConfigCommon {
 
     return retVal;
   }
+*/
 
   @Lazy
   @Bean
