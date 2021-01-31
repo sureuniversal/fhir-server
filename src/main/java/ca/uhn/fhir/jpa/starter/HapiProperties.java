@@ -250,7 +250,7 @@ public class HapiProperties {
   }
 
   public static Boolean getDefaultPrettyPrint() {
-    return HapiProperties.getBooleanProperty(DEFAULT_PRETTY_PRINT, true);
+    return HapiProperties.getBooleanProperty(DEFAULT_PRETTY_PRINT, false);
   }
 
   public static String getServerAddress() {
