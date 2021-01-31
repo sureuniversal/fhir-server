@@ -1,4 +1,4 @@
-package ca.uhn.fhir.jpa.starter.db.interactor;
+package ca.uhn.fhir.jpa.starter.interactor;
 
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
 
