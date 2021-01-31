@@ -1,6 +1,7 @@
 package ca.uhn.fhir.jpa.starter.interactor;
 
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
+import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 
 import java.sql.*;
 
