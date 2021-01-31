@@ -2,7 +2,7 @@ package ca.uhn.fhir.jpa.starter.Util;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
 import ca.uhn.fhir.jpa.starter.interactor.DBInteractorPostgres;
-import ca.uhn.fhir.jpa.starter.interactor.IDBInteractor;
+import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 
 public class DBUtils {
   private final static IDBInteractor interactor;
