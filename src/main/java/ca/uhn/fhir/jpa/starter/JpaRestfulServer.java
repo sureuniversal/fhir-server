@@ -1,7 +1,7 @@
 package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.jpa.starter.db.Search;
+import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.narrative.DefaultThymeleafNarrativeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -35,9 +35,7 @@ public class JpaRestfulServer extends BaseJpaRestfulServer {
       appProperties.setServer_address("");
     }
 
-    Search.setContext(ctx);
-    Search.setServer(appProperties.getServer_address());
-    Search.setClient();
+    Search.setClientByContext(ctx);
 
     TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
     this.registerInterceptor(tokenValidationInterceptor);
