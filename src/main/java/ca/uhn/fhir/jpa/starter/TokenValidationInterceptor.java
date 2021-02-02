@@ -76,6 +76,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     boolean isAdmin = tokenRecord.isAdmin;
     boolean isPractitioner = tokenRecord.is_practitioner();
     String userId = tokenRecord.getId();
+    String[] scopes = tokenRecord.getScopes();
 
     if (isAdmin)
     {
@@ -105,7 +106,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       var userType = isPractitioner ? UserType.practitioner : UserType.patient;
-      rule.setupUser(userId, userType);
+      rule.setupUser(userId, userType,scopes);
       var result = HandleRule(rule);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
       rulesList.addAll(result);
