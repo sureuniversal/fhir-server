@@ -7,6 +7,7 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.Patient;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PatientRules extends RuleBase {
@@ -51,6 +52,12 @@ public class PatientRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
+    if(Arrays.stream(this.scopes).noneMatch(s -> s.equals("w:resources:*")))
+    {
+      return new RuleBuilder()
+        .denyAll("Readonly scope")
+        .build();
+    }
     var userIds = this.setupAllowedUsersList();
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
