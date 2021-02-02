@@ -8,6 +8,7 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.DeviceMetric;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DeviceMetricRules extends RuleBase {
@@ -46,6 +47,12 @@ public class DeviceMetricRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
+    if(Arrays.stream(this.scopes).noneMatch(s -> s.equals("w:resources:*")))
+    {
+      return new RuleBuilder()
+        .denyAll("Readonly can't post")
+        .build();
+    }
     var allowedDeviceIdRefs = this.setupAllowedIdList();
     RuleBuilder ruleBuilder = new RuleBuilder();
     for (var id : allowedDeviceIdRefs) {
