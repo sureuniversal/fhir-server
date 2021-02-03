@@ -29,29 +29,11 @@ public class JpaRestfulServer extends BaseJpaRestfulServer {
      */
     FhirContext ctx = getFhirContext();
     ctx.setNarrativeGenerator(new DefaultThymeleafNarrativeGenerator());
-    if(System.getenv("SERVER_BASE_ADDRESS") != null){
-      appProperties.setServer_address(System.getenv("SERVER_BASE_ADDRESS"));
-    } else {
-      appProperties.setServer_address("");
-    }
 
     Search.setClientByContext(ctx);
 
     TokenValidationInterceptor tokenValidationInterceptor = new TokenValidationInterceptor();
     this.registerInterceptor(tokenValidationInterceptor);
-
-    /*
-     * Add some logging for each request
-     */
-    CustomLoggingInterceptor loggingInterceptor = new CustomLoggingInterceptor();
-    loggingInterceptor.setLoggerName(HapiProperties.getLoggerName());
-    loggingInterceptor.setMessageFormat(HapiProperties.getLoggerFormat());
-    loggingInterceptor.setErrorMessageFormat(HapiProperties.getLoggerErrorFormat());
-    loggingInterceptor.setIncomingFormat(HapiProperties.getLoggerIncomingFormat());
-    loggingInterceptor.setLogExceptions(HapiProperties.getLoggerLogExceptions());
-    //loggingInterceptor.setLogRequestSummary(true);
-    //loggingInterceptor.setLogRequestBody(true);
-    this.registerInterceptor(loggingInterceptor);
 
   }
 
