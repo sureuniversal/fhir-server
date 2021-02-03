@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${FHIR_PG_DATASOURCE_URL}
+    url: ${FHIR_PG_DATASOURCE_URL}/fhir
     username: ${FHIR_PG_DATASOURCE_USER_NAME}
     password: ${FHIR_PG_DATASOURCE_PASSWORD}
     driverClassName: org.postgresql.Driver
