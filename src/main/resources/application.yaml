@@ -27,10 +27,11 @@ spring:
   batch:
     job:
       enabled: false
+
 hapi:
   fhir:
     defer_indexing_for_codesystems_of_size: 101
-    server_address: 'http://localhost:8080/hapi-fhir-jpaserver/fhir'
+    server_address: 'http://localhost:8080/hapi-fhir-jpaserver/fhir/'
 #    implementationguides:
 #      -
 #        url: https://build.fhir.org/ig/hl7dk/dk-medcom/branches/corrections/package.tgz
