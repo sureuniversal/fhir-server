@@ -32,12 +32,6 @@ public class PractitionerRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
-    if(Arrays.stream(this.scopes).noneMatch(s -> s.equals("w:resources:*")))
-    {
-      return new RuleBuilder()
-        .denyAll("Readonly can't post")
-        .build();
-    }
     List<IAuthRule> practitionerRule =
       new RuleBuilder().allow().write().allResources().inCompartment("Practitioner",  RuleBase.toIdType(this.userId, "Practitioner")).build();
 
