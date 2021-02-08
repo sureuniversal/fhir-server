@@ -17,7 +17,6 @@ public abstract class RuleBase {
   protected String denyMessage;
   protected String userId;
   protected UserType userType;
-  protected String[] scopes;
 
   public RequestTypeEnum requestType;
 
@@ -53,11 +52,10 @@ public abstract class RuleBase {
     return new IdType(resourceType, id);
   }
 
-  public void setupUser(String userId, UserType userType,String[] scopes)
+  public void setupUser(String userId, UserType userType)
   {
     this.userId = userId;
     this.userType = userType;
-    this.scopes = scopes;
   }
 
   public void setOperation(RequestTypeEnum requestType)
