@@ -136,12 +136,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       case DELETE:
       case PATCH:
       case POST:
-        if(Arrays.stream(scopes).noneMatch(s -> s.equals("w:resources:*")))
-        {
-          return new RuleBuilder()
-            .denyAll("Readonly can't post")
-            .build();
-        }
+//        if(Arrays.stream(scopes).noneMatch(s -> s.equals("w:resources:*")))
+//        {
+//          return new RuleBuilder()
+//            .denyAll("Readonly can't post")
+//            .build();
+//        }
         return rule.handlePost();
       default:
         throw new IllegalStateException("Operation Unknown");
