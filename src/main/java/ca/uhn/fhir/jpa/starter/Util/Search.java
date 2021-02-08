@@ -8,7 +8,9 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Search {
   protected static IGenericClient client = null;
@@ -78,23 +80,60 @@ public class Search {
     return patients;
   }
 
-
   public static boolean isPractitionerAdmin(String practitioner){
+    var roles = getPractitionerRole(practitioner);
+    var isAdmin = roles.stream().anyMatch(e ->
+    {
+      var identifier = e.getIdentifier();
+      return identifier.stream().anyMatch(id -> id.getValue().equals("admin"));
+    });
+
+    return isAdmin;
+  }
+
+  public static IIdType getPractitionerOrganization(String practitioner){
+    var roles = getPractitionerRole(practitioner);
+    if (roles.isEmpty())
+    {
+      return null;
+    }
+
+    var role = roles.get(0);
+    return role.getOrganization().getReferenceElement();
+  }
+
+  public static List<PractitionerRole> getPractitionerRole(String practitioner){
     Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
       .execute();
 
-    for (Bundle.BundleEntryComponent itm : role.getEntry()) {
-      var identifiers = ((PractitionerRole)itm.getResource()).getIdentifier();
-      for (var identifier : identifiers)
-      {
-        if (identifier.getValue().equals("admin"))
-        {
-          return true;
-        }
-      }
-    }
+    var practitionerRoles = role.getEntry().stream()
+      .map(e -> (PractitionerRole) e.getResource())
+      .collect(Collectors.toList());
 
-    return false;
+    return practitionerRoles;
+  }
+
+  public static List<IIdType> getAllInOrganization(String organizationId)
+  {
+    Bundle patientsList = (Bundle) client.search().forResource(Patient.class)
+      .where(new ReferenceClientParam("organization").hasId(organizationId))
+      .execute();
+
+    Bundle practitionerList = (Bundle) client.search().forResource(PractitionerRole.class)
+      .where(new ReferenceClientParam("organization").hasId(organizationId))
+      .execute();
+
+    var patientIds =
+      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement()).collect(Collectors.toList());
+
+    var practitionerIds =
+      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement()).collect(Collectors.toList());
+
+    List<IIdType> ids = new ArrayList<>();
+    ids.addAll(practitionerIds);
+    ids.addAll(patientIds);
+
+    return ids;
   }
 }

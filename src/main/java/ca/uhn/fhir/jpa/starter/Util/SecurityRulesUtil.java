@@ -39,40 +39,20 @@ public class SecurityRulesUtil {
   }
 
   private static RuleBase rulesFactory(String compartmentName) throws Exception {
-    RuleBase res;
     switch (compartmentName) {
-      case "Flag":
-        res = new FlagRules();
-        break;
-      case "Observation":
-        res = new ObservationRules();
-        break;
-      case "CareTeam":
-        res = new CareTeamRules();
-        break;
-      case "Patient":
-        res = new PatientRules();
-        break;
-      case "Practitioner":
-        res = new PractitionerRules();
-        break;
-      case "DeviceMetric":
-        res = new DeviceMetricRules();
-        break;
-      case "Device":
-        res = new DeviceRules();
-        break;
-      case "metadata":
-        res = new MetadataRules();
-        break;
-      case "PractitionerRole":
-        res = new PractitionerRoleRules();
-        break;
+      case "Flag":  return new FlagRules();
+      case "Observation":return new ObservationRules();
+      case "CareTeam": return new CareTeamRules();
+      case "Patient": return new PatientRules();
+      case "Practitioner": return new PractitionerRules();
+      case "DeviceMetric": return new DeviceMetricRules();
+      case "Device": return new DeviceRules();
+      case "metadata": return new MetadataRules();
+      case "PractitionerRole": return new PractitionerRoleRules();
+      case "Organization": return new OrganizationRules();
       default:
         throw new Exception("Method does not exist");
     }
-
-    return res;
   }
 
   private static RequestTypeEnum convertToRequestType(String method)
