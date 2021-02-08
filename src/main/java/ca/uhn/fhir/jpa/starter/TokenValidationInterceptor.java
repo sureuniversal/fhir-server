@@ -106,8 +106,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       var userType = isPractitioner ? UserType.practitioner : UserType.patient;
-      rule.setupUser(userId, userType,scopes);
-      var result = HandleRule(rule);
+      rule.setupUser(userId, userType);
+      var result = HandleRule(rule,scopes);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
       rulesList.addAll(result);
     }
@@ -122,7 +122,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     return rulesList;
   }
 
-  private List<IAuthRule> HandleRule(RuleBase rule)
+  private List<IAuthRule> HandleRule(RuleBase rule, String[] scopes)
   {
     switch (rule.requestType) {
       case TRACE:
@@ -136,6 +136,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       case DELETE:
       case PATCH:
       case POST:
+        if(Arrays.stream(scopes).noneMatch(s -> s.equals("w:resources:*")))
+        {
+          return new RuleBuilder()
+            .denyAll("Readonly can't post")
+            .build();
+        }
         return rule.handlePost();
       default:
         throw new IllegalStateException("Operation Unknown");
