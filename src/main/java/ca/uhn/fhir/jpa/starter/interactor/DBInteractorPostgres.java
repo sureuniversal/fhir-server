@@ -23,7 +23,7 @@ public class DBInteractorPostgres implements IDBInteractor {
   public TokenRecord getTokenRecord(String token) {
     try {
       var postgresStm = postgresCon.prepareStatement(
-        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin, o.scopes " +
+        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin, false as scopes " +
           "from public.oauthaccesstoken o " +
           "join public.user u on o.uid = u.id " +
           "where o.accesstoken = '" + token + "';"
