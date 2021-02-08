@@ -52,12 +52,6 @@ public class PatientRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
-    if(Arrays.stream(this.scopes).noneMatch(s -> s.equals("w:resources:*")))
-    {
-      return new RuleBuilder()
-        .denyAll("Readonly scope")
-        .build();
-    }
     var userIds = this.setupAllowedUsersList();
     List<IAuthRule> ruleList = new ArrayList<>();
     RuleBuilder ruleBuilder = new RuleBuilder();
