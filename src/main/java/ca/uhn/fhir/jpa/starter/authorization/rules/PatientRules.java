@@ -1,6 +1,7 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.jpa.starter.Models.UserType;
+import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -88,7 +89,10 @@ public class PatientRules extends RuleBase {
   {
     List<IIdType> userIds = new ArrayList<>();
     var careTeamUsers = handleCareTeam();
+    var organizationUsers = Search.getAllInOrganization(this.userId);
+
     userIds.addAll(careTeamUsers);
+    userIds.addAll(organizationUsers);
 
     if (this.userType == UserType.patient)
     {
