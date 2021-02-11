@@ -9,6 +9,7 @@ import ca.uhn.fhir.jpa.starter.Util.DBUtils;
 import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.jpa.starter.Util.SecurityRulesUtil;
 import ca.uhn.fhir.jpa.starter.authorization.rules.RuleBase;
+import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
@@ -47,7 +48,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .allowAll("Port 8080")
         .build();
     }
-
+    theRequestDetails.getParameters();
     String authHeader = theRequestDetails.getHeader("Authorization");
     if (authHeader == null) {
       return new RuleBuilder()
@@ -85,6 +86,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
 
+    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
+      return new RuleBuilder().allowAll().build();
+    }
+
     List<RuleBase>  ruleBase;
     try {
       ruleBase = SecurityRulesUtil.rulesFactory(theRequestDetails);
@@ -95,10 +100,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     List<IAuthRule> rulesList = new ArrayList();
     for (var rule : ruleBase)
     {
-      var type = rule.type.getName();
-      var operation = rule.requestType;
-      var cacheKey = authHeader + '-' + type + '-' + operation;
-
+      var cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
       var cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
       {
@@ -107,6 +109,8 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       var userType = isPractitioner ? UserType.practitioner : UserType.patient;
       rule.setupUser(userId, userType);
+      rule.setUserIdsRequested(theRequestDetails);
+
       var result = HandleRule(rule,scopes);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
       rulesList.addAll(result);
