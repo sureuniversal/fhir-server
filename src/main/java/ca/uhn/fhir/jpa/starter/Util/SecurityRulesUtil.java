@@ -1,10 +1,10 @@
 package ca.uhn.fhir.jpa.starter.Util;
 
 import ca.uhn.fhir.jpa.starter.authorization.rules.*;
-import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import org.hl7.fhir.r4.model.Bundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +16,10 @@ public class SecurityRulesUtil {
       var bundleRes = ((Bundle)theRequestDetails.getResource()).getEntry();
       for (var item : bundleRes)
       {
-        var method = item.getRequest().getMethod();
+        var method = item.getRequest().getMethod().getDisplay();
         var operation = convertToRequestType(method);
 
-        var resName = item.getResource().getResourceName();
+        var resName = "Flag";//item.getResource().fhirType();
         var rule = rulesFactory(resName);
         rule.setOperation(operation);
         rulesList.add(rule);
