@@ -6,6 +6,8 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
+import ca.uhn.fhir.rest.server.interceptor.auth.PolicyEnum;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -45,62 +47,6 @@ public class Search {
     client = ctx.newRestfulGenericClient(server);
     parser = ctx.newJsonParser();
     parser.setPrettyPrint(true);
-  }
-
-  public static List<IIdType> getDeviceMetrics(List<IIdType> patientIds, String authHeader) {
-    List<IIdType> retVal = new ArrayList<>();
-    List<IIdType> devices = getDevices(patientIds, authHeader);
-    for (var itm : devices) {
-      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-        .where(new ReferenceClientParam("source").hasId(itm))
-        .withAdditionalHeader("Authorization", authHeader)
-        .execute();
-      for (var itm2 : deviceMetricBundle.getEntry()) {
-        retVal.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
-      }
-    }
-    return retVal;
-  }
-
-  public static List<IIdType> getDeviceMetrics(String patientId, String authHeader) {
-    List<IIdType> retVal = new ArrayList<>();
-    List<IIdType> devices = getDevices(patientId, authHeader);
-    for (var itm : devices) {
-      Bundle deviceMetricBundle = (Bundle) client.search().forResource(DeviceMetric.class)
-        .where(new ReferenceClientParam("source").hasId(itm))
-        .withAdditionalHeader("Authorization", authHeader)
-        .execute();
-      for (var itm2 : deviceMetricBundle.getEntry()) {
-        retVal.add(itm2.getResource().getIdElement().toUnqualifiedVersionless());
-      }
-    }
-    return retVal;
-  }
-
-  public static List<IIdType> getDevices(List<IIdType> patientIds, String authHeader) {
-    List<IIdType> retVal = new ArrayList<>();
-    for (var id : patientIds) {
-      Bundle deviceBundle = (Bundle) client.search().forResource(Device.class)
-        .where(new ReferenceClientParam("patient").hasId(id))
-        .withAdditionalHeader("Authorization", authHeader)
-        .execute();
-      for (var itm : deviceBundle.getEntry()) {
-        retVal.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
-      }
-    }
-    return retVal;
-  }
-
-  public static List<IIdType> getDevices(String patientId, String authHeader) {
-    List<IIdType> retVal = new ArrayList<>();
-    Bundle deviceBundle = (Bundle) client.search().forResource(Device.class)
-      .where(new ReferenceClientParam("patient").hasId(patientId))
-      .withAdditionalHeader("Authorization", authHeader)
-      .execute();
-    for (var itm : deviceBundle.getEntry()) {
-      retVal.add(itm.getResource().getIdElement().toUnqualifiedVersionless());
-    }
-    return retVal;
   }
 
   public static List<IIdType> getPatients(String practitioner, String authHeader) {
@@ -157,5 +103,33 @@ public class Search {
 
   public static Observation getObservation(IIdType id) {
     return client.read().resource(Observation.class).withId(id).execute();
+  }
+
+  public static boolean isPractitionerHasPatient(IIdType practitionerId,IIdType patientId){
+    try {
+      Patient patient = getPatient(patientId);
+      return patient != null && patient.getGeneralPractitionerFirstRep().getReferenceElement().equals(practitionerId);
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  public static boolean isInCareTeam(IIdType id1,IIdType id2){
+    Bundle subject = (Bundle) client.search().forResource(CareTeam.class)
+      .where(new ReferenceClientParam("subject").hasId(id1))
+      .execute();
+    Bundle participant = (Bundle) client.search().forResource(CareTeam.class)
+      .where(new ReferenceClientParam("participant").hasId(id1))
+      .execute();
+    subject.copyValues(participant);
+    for (Bundle.BundleEntryComponent itm : participant.getEntry()){
+      if(((CareTeam)(itm.getResource())).getParticipant().stream().anyMatch(p -> p.getMember().getReferenceElement().toUnqualifiedVersionless().equals(id2))){
+        return true;
+      }
+      if(((CareTeam)(itm.getResource())).getSubject().getReferenceElement().toUnqualifiedVersionless().equals(id2)){
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -9,7 +9,6 @@ import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor.Verdict
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.IRuleApplier;
 import ca.uhn.fhir.rest.server.interceptor.auth.PolicyEnum;
-import com.mongodb.BasicDBObjectBuilder;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
@@ -22,10 +21,12 @@ public class RuleImplPatient implements IAuthRule {
 
   String name;
   List<IIdType> patients;
-  IIdType practitioner;
+  List<IIdType> practitioners;
+  IIdType myId;
   List<IIdType> devices= new ArrayList<>();
   List<IIdType> deviceMetrics= new ArrayList<>();
   List<IIdType> observations= new ArrayList<>();
+  boolean isPractitioner;
 
 
   public RuleImplPatient(String name, List<IIdType> patients, IIdType practitioner) {
@@ -35,21 +36,20 @@ public class RuleImplPatient implements IAuthRule {
     } else {
       this.patients = patients;
     }
-    this.practitioner = practitioner;
+    practitioners = new ArrayList<>();
+    practitioners.add(practitioner);
+    this.myId = practitioner;
+    isPractitioner = true;
   }
 
   public RuleImplPatient(String name, IIdType patient) {
-    List<IIdType> patients2 = new ArrayList<>();
-    patients2.add(patient);
     this.name = name;
-    this.patients = patients2;
-    this.practitioner = null;
-  }
+    patients = new ArrayList<>();
+    patients.add(patient);
+    practitioners = new ArrayList<>();
+    this.myId = patient;
+    isPractitioner = false;
 
-  public RuleImplPatient(String name, String practitionerId, String auth) {
-    this.name = name;
-    patients = Search.getPatients(practitionerId, auth);
-    practitioner = new IdType("Practitioner", practitionerId);
   }
 
   @Override
@@ -95,6 +95,7 @@ public class RuleImplPatient implements IAuthRule {
       case HISTORY_SYSTEM:
       case READ:
       case VREAD:
+      case GET_PAGE:
         if (theOutputResource == null) {
           return new Verdict(PolicyEnum.ALLOW, this);
         } else {
@@ -105,7 +106,6 @@ public class RuleImplPatient implements IAuthRule {
       case TRANSACTION:
         return null;
       case METADATA:
-      case GET_PAGE:
         return new Verdict(PolicyEnum.ALLOW, this);
       case VALIDATE:
       case META_ADD:
@@ -123,17 +123,17 @@ public class RuleImplPatient implements IAuthRule {
       case "class org.hl7.fhir.r4.model.DeviceMetric":
         return deviceDecision(((DeviceMetric) resource).getSource().getReferenceElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.Patient":
-        if(practitioner == null) {
-          return patientDecision(resource.getIdElement().toUnqualifiedVersionless());
-        } else {
-          return practitionerDecision(((Patient) resource).getGeneralPractitionerFirstRep().getReferenceElement().toUnqualifiedVersionless());
-        }
+        return patientDecision(resource.getIdElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.Observation":
         return patientDecision(((Observation) resource).getSubject().getReferenceElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.Practitioner":
           return practitionerDecision(resource.getIdElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.PractitionerRole":
         return practitionerDecision(((PractitionerRole)resource).getPractitioner().getReferenceElement().toUnqualifiedVersionless());
+      case "class org.hl7.fhir.r4.model.Organization":
+        return patientDecision(resource.getIdElement().toUnqualifiedVersionless().getIdPart());
+      case "class org.hl7.fhir.r4.model.Flag":
+        return patientDecision(((Flag) resource).getSubject().getReferenceElement().toUnqualifiedVersionless());
     }
     return null;
   }
@@ -146,6 +146,8 @@ public class RuleImplPatient implements IAuthRule {
         return deviceMetricDecision(id.toUnqualifiedVersionless());
       case "Patient":
         return patientDecision(id.toUnqualifiedVersionless());
+      case "Organization":
+        return patientDecision(id.toUnqualifiedVersionless().getIdPart());
       case "Observation":
         return observationDecision(id.toUnqualifiedVersionless());
       case "Practitioner":
@@ -166,6 +168,8 @@ public class RuleImplPatient implements IAuthRule {
           return practitionerDecision(theRequestDetails.getParameters().get("practitioner")[0]);
         case "Patient":
           return practitionerDecision(theRequestDetails.getParameters().get("general-practitioner")[0]);
+        case "Flag":
+          return patientDecision(theRequestDetails.getParameters().get("subject")[0].split(","));
         default:
           return patientDecision(theRequestDetails.getParameters().get("subject")[0]);
       }
@@ -178,17 +182,9 @@ public class RuleImplPatient implements IAuthRule {
     if (patients.contains(id)) {
       return new Verdict(PolicyEnum.ALLOW, this);
     } else {
-      if(practitioner != null) {
-        try {
-          Patient patient = Search.getPatient(id);
-          if (patient == null) return null;
-          if (patient.getGeneralPractitionerFirstRep().getReferenceElement().equals(practitioner)) {
-            patients.add(patient.getIdElement().toUnqualifiedVersionless());
-            return new Verdict(PolicyEnum.ALLOW, this);
-          }
-        } catch (Exception e) {
-          return null;
-        }
+      if((isPractitioner && Search.isPractitionerHasPatient(myId, id))||Search.isInCareTeam(myId,id)) {
+        patients.add(id.toUnqualifiedVersionless());
+        return new Verdict(PolicyEnum.ALLOW, this);
       }
       return null;
     }
@@ -250,15 +246,29 @@ public class RuleImplPatient implements IAuthRule {
   }
 
   Verdict practitionerDecision(IIdType id) {
-    if(practitioner != null && practitioner.equals(id)) {
+    if (practitioners.contains(id)) {
       return new Verdict(PolicyEnum.ALLOW, this);
+    } else {
+      if(Search.isInCareTeam(myId,id)) {
+        practitioners.add(id.toUnqualifiedVersionless());
+        return new Verdict(PolicyEnum.ALLOW, this);
+      }
+      return null;
     }
-    return null;
   }
 
 
   Verdict patientDecision(String id) {
     return patientDecision(new IdType("Patient", id.replace("Patient/","")));
+  }
+  Verdict patientDecision(String[] ids) {
+    for (String id :
+      ids) {
+      if(patientDecision(id) == null){
+        return null;
+      }
+    }
+    return new Verdict(PolicyEnum.ALLOW, this);
   }
 
   Verdict practitionerDecision(String id) {
