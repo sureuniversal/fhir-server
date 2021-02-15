@@ -6,35 +6,64 @@ import java.sql.*;
 
 public class DBInteractorPostgres implements IDBInteractor {
 
-  private Statement postgresStm;
+  private final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(DBInteractorPostgres.class);
+
+  private Connection postgresCon;
+  private final Connector connector;
+  private class Connector {
+    public String connectionString;
+    public String postgresUser;
+    public String postgresPass;
+
+    public Connector(String connectionString, String postgresUser, String postgresPass) {
+      this.connectionString = connectionString;
+      this.postgresUser = postgresUser;
+      this.postgresPass = postgresPass;
+    }
+
+    public void connect(){
+      try {
+        Class.forName("org.postgresql.Driver");
+        postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
+      } catch (SQLException | ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+
+  }
 
   public DBInteractorPostgres(String connectionString, String postgresUser, String postgresPass) {
-    try {
-      Class.forName("org.postgresql.Driver");
-      Connection postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
-      postgresStm = postgresCon.createStatement();
-    } catch (SQLException | ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    connector = new Connector(connectionString,postgresUser,postgresPass);
+    connector.connect();
   }
 
   @Override
   public TokenRecord getTokenRecord(String token) {
     try {
-      ResultSet resultSet = postgresStm.executeQuery(
-        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin " +
+      if(postgresCon.isClosed()){
+        connector.connect();
+      }
+      PreparedStatement postgresStm = postgresCon.prepareStatement(
+        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin, o.scopes " +
           "from public.oauthaccesstoken o " +
           "join public.user u on o.uid = u.id " +
-          "where o.accesstoken = '" + token + "';");
+          "where o.accesstoken = '" + token + "';"
+        );
+
+      ResultSet resultSet = postgresStm.executeQuery();
       if (!resultSet.next()) return null;
       String userId = resultSet.getString("id");
       boolean isPractitioner = resultSet.getBoolean("ispractitioner");
       long issued = -1;
       long expire = -1;
-      return new TokenRecord(userId, token, isPractitioner, issued, expire);
+      String[] scopes = resultSet.getString("scopes").replaceAll("[\\]\\[\"]","").split(",");
+      postgresStm.close();
+      return new TokenRecord(userId, token, isPractitioner, issued, expire, scopes);
     } catch (SQLException e) {
-      org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(DBInteractorPostgres.class);
       ourLog.error("postgreSQL error:", e);
+      if(e.getCause().getClass() == java.net.SocketException.class){
+        return getTokenRecord(token);
+      }
       return null;
     }
   }
