@@ -6,6 +6,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.server.exceptions.ResourceGoneException;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.PolicyEnum;
 import org.apache.http.client.HttpClient;
@@ -131,5 +132,13 @@ public class Search {
       }
     }
     return false;
+  }
+  public static boolean isPatientExists(IIdType patientId){
+    try {
+      getPatient(patientId);
+      return true;
+    } catch (ResourceGoneException e) {
+      return false;
+    }
   }
 }

@@ -9,6 +9,7 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
+import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
 import java.util.List;
@@ -48,12 +49,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .build();
       }
 
-      RuleImplPatient ruleImplPatient;
-      if (isPractitioner) {
-        ruleImplPatient = new RuleImplPatient("",null,new IdType("Practitioner",bearerId));
-      } else {
-        ruleImplPatient = new RuleImplPatient("",new IdType("Patient",bearerId));
-      }
+      IIdType myId =  new IdType((isPractitioner)?"Practitioner":"Patient", bearerId);
+
+      RuleImplPatient ruleImplPatient= new RuleImplPatient("",myId,isPractitioner);
 
       List<IAuthRule> rule = new RuleBuilder()
         .allow().metadata().andThen()

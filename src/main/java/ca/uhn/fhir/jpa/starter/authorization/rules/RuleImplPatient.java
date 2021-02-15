@@ -28,27 +28,17 @@ public class RuleImplPatient implements IAuthRule {
   List<IIdType> observations= new ArrayList<>();
   boolean isPractitioner;
 
-
-  public RuleImplPatient(String name, List<IIdType> patients, IIdType practitioner) {
-    this.name = name;
-    if(patients == null){
-      this.patients = new ArrayList<>();
-    } else {
-      this.patients = patients;
-    }
-    practitioners = new ArrayList<>();
-    practitioners.add(practitioner);
-    this.myId = practitioner;
-    isPractitioner = true;
-  }
-
-  public RuleImplPatient(String name, IIdType patient) {
+  public RuleImplPatient(String name, IIdType id, boolean isPractitioner) {
     this.name = name;
     patients = new ArrayList<>();
-    patients.add(patient);
     practitioners = new ArrayList<>();
-    this.myId = patient;
-    isPractitioner = false;
+    this.myId = id;
+    this.isPractitioner = isPractitioner;
+    if(isPractitioner) {
+      practitioners.add(id);
+    }else{
+      patients.add(id);
+    }
 
   }
 
@@ -87,7 +77,7 @@ public class RuleImplPatient implements IAuthRule {
       case PATCH:
       case CREATE:
       case UPDATE:
-        if(theInputResource.getClass() == Patient.class)  return new Verdict(PolicyEnum.ALLOW, this);
+        if(theInputResource.getClass() == Patient.class)  return patientUpdateDecision(theInputResource);
         return resourceDecision(theInputResource);
       case HISTORY_INSTANCE:
       case HISTORY_TYPE:
@@ -123,7 +113,11 @@ public class RuleImplPatient implements IAuthRule {
       case "class org.hl7.fhir.r4.model.DeviceMetric":
         return deviceDecision(((DeviceMetric) resource).getSource().getReferenceElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.Patient":
-        return patientDecision(resource.getIdElement().toUnqualifiedVersionless());
+        if(!isPractitioner) {
+          return patientDecision(resource.getIdElement().toUnqualifiedVersionless());
+        } else {
+          return practitionerDecision(((Patient) resource).getGeneralPractitionerFirstRep().getReferenceElement().toUnqualifiedVersionless());
+        }
       case "class org.hl7.fhir.r4.model.Observation":
         return patientDecision(((Observation) resource).getSubject().getReferenceElement().toUnqualifiedVersionless());
       case "class org.hl7.fhir.r4.model.Practitioner":
@@ -280,5 +274,13 @@ public class RuleImplPatient implements IAuthRule {
 
   String resourceNameRequest(RequestDetails theRequestDetails) {
     return theRequestDetails.getResourceName();
+  }
+
+  Verdict patientUpdateDecision(IBaseResource patient){
+    if(resourceDecision(patient) != null
+      || !Search.isPatientExists(patient.getIdElement().toUnqualifiedVersionless())){
+      return new Verdict(PolicyEnum.ALLOW, this);
+    }
+    return null;
   }
 }
