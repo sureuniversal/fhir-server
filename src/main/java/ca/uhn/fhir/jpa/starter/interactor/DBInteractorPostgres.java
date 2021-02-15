@@ -9,20 +9,41 @@ public class DBInteractorPostgres implements IDBInteractor {
   private final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(DBInteractorPostgres.class);
 
   private Connection postgresCon;
+  private final Connector connector;
+  private class Connector {
+    public String connectionString;
+    public String postgresUser;
+    public String postgresPass;
+
+    public Connector(String connectionString, String postgresUser, String postgresPass) {
+      this.connectionString = connectionString;
+      this.postgresUser = postgresUser;
+      this.postgresPass = postgresPass;
+    }
+
+    public void connect(){
+      try {
+        Class.forName("org.postgresql.Driver");
+        postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
+      } catch (SQLException | ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+
+  }
 
   public DBInteractorPostgres(String connectionString, String postgresUser, String postgresPass) {
-    try {
-      Class.forName("org.postgresql.Driver");
-      postgresCon = DriverManager.getConnection(connectionString, postgresUser, postgresPass);
-    } catch (SQLException | ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    connector = new Connector(connectionString,postgresUser,postgresPass);
+    connector.connect();
   }
 
   @Override
   public TokenRecord getTokenRecord(String token) {
     try {
-      var postgresStm = postgresCon.prepareStatement(
+      if(postgresCon.isClosed()){
+        connector.connect();
+      }
+      PreparedStatement postgresStm = postgresCon.prepareStatement(
         "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin, o.scopes " +
           "from public.oauthaccesstoken o " +
           "join public.user u on o.uid = u.id " +
@@ -40,6 +61,9 @@ public class DBInteractorPostgres implements IDBInteractor {
       return new TokenRecord(userId, token, isPractitioner, issued, expire, scopes);
     } catch (SQLException e) {
       ourLog.error("postgreSQL error:", e);
+      if(e.getCause().getClass() == java.net.SocketException.class){
+        return getTokenRecord(token);
+      }
       return null;
     }
   }
