@@ -12,6 +12,7 @@ import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Interceptor
@@ -53,14 +54,25 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       RuleImplPatient ruleImplPatient= new RuleImplPatient("",myId,isPractitioner);
 
-      List<IAuthRule> rule = new RuleBuilder()
+      List<IAuthRule> rules = new RuleBuilder()
         .allow().metadata().andThen()
-        .allow().transaction().withAnyOperation().andApplyNormalRules().andThen()
-        .denyAll()
+        .allow().transaction().withAnyOperation().andApplyNormalRules()
         .build();
-      rule.add(0,ruleImplPatient);
+      List<IAuthRule> afterRules;
+      if (Arrays.stream(tokenRecord.getScopes()).noneMatch(s -> s.equalsIgnoreCase("w:resources:*"))) {
+        List<IAuthRule> readOnlyRules = new RuleBuilder()
+          .deny("read only").write().allResources().withAnyId().andThen()
+          .deny("read only").delete().allResources().withAnyId()
+          .build();
+        rules.addAll(0,readOnlyRules);
+      }
+      rules.add(ruleImplPatient);
+      afterRules = new RuleBuilder()
+        .denyAll("Default")
+        .build();
+      rules.addAll(afterRules);
 
-      return rule;
+      return rules;
 
     } else {
       return new RuleBuilder()
