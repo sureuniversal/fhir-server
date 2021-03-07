@@ -128,6 +128,8 @@ public class RuleImplPatient implements IAuthRule {
         return patientDecision(resource.getIdElement().toUnqualifiedVersionless().getIdPart());
       case "class org.hl7.fhir.r4.model.Flag":
         return patientDecision(((Flag) resource).getSubject().getReferenceElement().toUnqualifiedVersionless());
+      case "class org.hl7.fhir.r4.model.DiagnosticReport":
+        return patientDecision(((DiagnosticReport) resource).getSubject().getReferenceElement().toUnqualifiedVersionless());
     }
     return null;
   }
