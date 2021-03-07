@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.DiagnosticReport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,7 @@ public class SecurityRulesUtil {
       case "metadata": return new MetadataRules();
       case "PractitionerRole": return new PractitionerRoleRules();
       case "Organization": return new OrganizationRules();
+      case "DiagnosticReport": return new DiagnosticReportRules();
       default:
         throw new Exception("Method does not exist");
     }
