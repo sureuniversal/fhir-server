@@ -517,5 +517,12 @@ public class HapiProperties {
   public static boolean getBulkExportEnabled() {
     return HapiProperties.getBooleanProperty(BULK_EXPORT_ENABLED, true);
   }
+  public static long getCacheTtl(long defaultValue){
+    try{
+      return Long.parseLong(System.getenv("CACHE_TTL"));
+    } catch (Exception e) {
+      return defaultValue;
+    }
+  }
 }
 

@@ -12,11 +12,47 @@ import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
+  private static final Map<String, CacheRecord<List<IAuthRule>>> ruleCache = new ConcurrentHashMap<>();
+  private static final Timer cacheTimer = new Timer("cache Timer",true);
+
+  static
+  {
+    cacheTimer.schedule(new TimerTask() {
+                          @Override
+                          public void run() {
+                            try {
+                              cleanRuleCache();
+                            } catch (Exception e) {
+                              org.slf4j.LoggerFactory.getLogger("cacheTimer").error("cacheTimer:", e);
+                            }
+                          }
+                        },
+      Utils.getCacheTtl(),
+      Utils.getCacheTtl());
+  }
+
+  private static class CacheRecord<T> {
+    private final long recordTtl;
+
+    private final T record;
+
+    public T getRecord() {
+      return record;
+    }
+    public CacheRecord(T record)
+    {
+      this.record = record;
+      this.recordTtl = System.currentTimeMillis() + Utils.getCacheTtl();
+    }
+    public boolean isRecordExpired(){
+      return ((recordTtl - System.currentTimeMillis()) < 0);
+    }
+  }
 
   @Override
   public List<IAuthRule> buildRuleList(RequestDetails theRequestDetails) {
@@ -32,6 +68,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       return new RuleBuilder()
         .denyAll("no authorization header")
         .build();
+    }
+
+    {
+      CacheRecord<List<IAuthRule>> rule = ruleCache.get(authHeader);
+      if(rule != null){
+        return rule.getRecord();
+      }
     }
 
     String token = authHeader.replace("Bearer ", "");
@@ -54,7 +97,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       RuleImplPatient ruleImplPatient= new RuleImplPatient("",myId,isPractitioner);
 
-      List<IAuthRule> rules = new RuleBuilder()
+      List<IAuthRule> rule = new RuleBuilder()
         .allow().metadata().andThen()
         .allow().transaction().withAnyOperation().andApplyNormalRules()
         .build();
@@ -64,20 +107,32 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .deny("read only").write().allResources().withAnyId().andThen()
           .deny("read only").delete().allResources().withAnyId()
           .build();
-        rules.addAll(0,readOnlyRules);
+        rule.addAll(0,readOnlyRules);
       }
-      rules.add(ruleImplPatient);
+      rule.add(ruleImplPatient);
       afterRules = new RuleBuilder()
         .denyAll("Default")
         .build();
-      rules.addAll(afterRules);
+      rule.addAll(afterRules);
 
-      return rules;
+      ruleCache.put(authHeader, new CacheRecord<>(rule));
+
+      return rule;
 
     } else {
       return new RuleBuilder()
         .denyAll("invalid token")
         .build();
     }
+  }
+  private static void cleanRuleCache() {
+    List<String> removeList = new ArrayList<>();
+    ruleCache.forEach((k, v) -> {
+      if (v.isRecordExpired()) {
+        removeList.add(k);
+      }
+    });
+
+    removeList.forEach(ruleCache::remove);
   }
 }
