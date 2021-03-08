@@ -94,7 +94,6 @@ public class RuleImplPatient implements IAuthRule {
       case SEARCH_TYPE:
         return searchDecision(theRequestDetails);
       case TRANSACTION:
-        return null;
       case METADATA:
         return new Verdict(PolicyEnum.ALLOW, this);
       case VALIDATE:
@@ -164,10 +163,12 @@ public class RuleImplPatient implements IAuthRule {
           return practitionerDecision(theRequestDetails.getParameters().get("practitioner")[0]);
         case "Patient":
           return practitionerDecision(theRequestDetails.getParameters().get("general-practitioner")[0]);
-        case "Flag":
-          return patientDecision(theRequestDetails.getParameters().get("subject")[0].split(","));
+        case "CareTeam":
+          if(theRequestDetails.getParameters().get("participant")[0] != null) {
+            return patientDecision(theRequestDetails.getParameters().get("participant")[0].split(","));
+          }
         default:
-          return patientDecision(theRequestDetails.getParameters().get("subject")[0]);
+          return patientDecision(theRequestDetails.getParameters().get("subject")[0].split(","));
       }
     } catch (Exception e) {
       return null;
