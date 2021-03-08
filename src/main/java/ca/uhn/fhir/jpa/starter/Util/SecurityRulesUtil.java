@@ -12,16 +12,16 @@ import java.util.List;
 
 public class SecurityRulesUtil {
   public static List<RuleBase> rulesFactory(RequestDetails theRequestDetails) throws Exception {
-    var rulesList = new ArrayList<RuleBase>();
+    List<RuleBase> rulesList = new ArrayList<>();
     if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
       var bundleRes = ((Bundle)theRequestDetails.getResource()).getEntry();
       for (var item : bundleRes)
       {
-        var method = item.getRequest().getMethod().getDisplay();
-        var operation = convertToRequestType(method);
+        String method = item.getRequest().getMethod().getDisplay();
+        RequestTypeEnum operation = convertToRequestType(method);
 
-        var resName = "Flag";//item.getResource().fhirType();
-        var rule = rulesFactory(resName);
+        String resName = item.getRequest().getUrl().split("[/\\?]")[0];
+        RuleBase rule = rulesFactory(resName);
         rule.setOperation(operation);
         rulesList.add(rule);
       }

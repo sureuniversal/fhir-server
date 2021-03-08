@@ -78,8 +78,12 @@ public abstract class RuleBase {
     }
     else
     {
-      var id = theRequestDetails.getId();
-      this.userIdsParamValue.add(id.getIdPart());
+      try {
+        var id = theRequestDetails.getId();
+        this.userIdsParamValue.add(id.getIdPart());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 

@@ -54,8 +54,12 @@ public class CacheUtil {
     }
     else
     {
-      var id = theRequestDetails.getId();
-      askedUsers = new StringBuilder(id.getIdPart());
+      try {
+        var id = theRequestDetails.getId();
+        askedUsers = new StringBuilder(id.getIdPart());
+      } catch (Exception e) {
+        askedUsers = new StringBuilder("error-id");
+      }
     }
 
     var type = rule.type.getName();

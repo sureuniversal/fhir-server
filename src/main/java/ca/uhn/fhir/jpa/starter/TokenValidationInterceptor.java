@@ -86,9 +86,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
 
-    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
-      return new RuleBuilder().allowAll().build();
-    }
+//    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
+//      return new RuleBuilder().allowAll().build();
+//    }
 
     List<RuleBase>  ruleBase;
     try {
