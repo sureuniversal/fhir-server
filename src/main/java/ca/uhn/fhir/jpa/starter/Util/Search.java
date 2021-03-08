@@ -4,6 +4,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.*;
 
@@ -29,6 +31,10 @@ public class Search {
   }
 
   public static void setClientByContext(FhirContext ctx) {
+
+    HttpClient httpClient = HttpClientBuilder.create().build();
+    ctx.getRestfulClientFactory().setHttpClient(httpClient);
+
     Search.setClient(ctx.newRestfulGenericClient(server));
   }
 
