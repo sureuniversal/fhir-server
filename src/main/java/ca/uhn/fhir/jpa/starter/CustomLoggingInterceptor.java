@@ -254,7 +254,7 @@ public class CustomLoggingInterceptor {
                 b.append(UrlUtil.escapeUrlParam(nextValue));
               }
             }
-            return b.toString();//return URLDecoder.decode(b.toString(), Constants.CHARSET_UTF8);
+            return URLDecoder.decode(b.toString(), Constants.CHARSET_UTF8);
           default:
             return "!VAL!";
         }

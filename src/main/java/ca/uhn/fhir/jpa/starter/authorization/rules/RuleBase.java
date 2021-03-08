@@ -3,15 +3,19 @@ package ca.uhn.fhir.jpa.starter.authorization.rules;
 import ca.uhn.fhir.jpa.starter.Util.CareTeamSearch;
 import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
-
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class RuleBase {
   protected String denyMessage;
@@ -19,6 +23,8 @@ public abstract class RuleBase {
   protected UserType userType;
 
   public RequestTypeEnum requestType;
+  protected List<String> userIdsParamValue;
+  private String[] userIdsParamName = new String[]{ "subject", "participant" };
 
   public Class<? extends IBaseResource> type;
 
@@ -28,13 +34,14 @@ public abstract class RuleBase {
 
   public abstract List<IAuthRule> handlePost();
 
-  public List<IAuthRule> commonRulesGet() {
+  protected List<IAuthRule> commonRulesGet() {
     return new RuleBuilder()
-      .allow().metadata().andThen()
+      .allow().metadata().andThen().allow().transaction().withAnyOperation().andApplyNormalRules().andThen()
       .allow().patch().allRequests()
       .build();
   }
-  public List<IAuthRule> commonRulesPost() {
+
+  protected List<IAuthRule> commonRulesPost() {
     return new RuleBuilder()
       .allow().metadata().andThen()
       .allow().patch().allRequests().andThen()
@@ -42,14 +49,38 @@ public abstract class RuleBase {
       .build();
   }
 
-  public List<IAuthRule> denyRule() {
+  protected List<IAuthRule> denyRule() {
     return new RuleBuilder()
       .denyAll(denyMessage)
       .build();
   }
 
-  public static IIdType toIdType(String id, String resourceType) {
+  protected static IIdType toIdType(String id, String resourceType) {
     return new IdType(resourceType, id);
+  }
+
+  public void setUserIdsRequested(RequestDetails theRequestDetails)
+  {
+    var params = theRequestDetails.getParameters();
+    this.userIdsParamValue = new ArrayList<>();
+    if (params != null && !params.isEmpty())
+    {
+      for(var name : this.userIdsParamName)
+      {
+        var value = params.get(name);
+        if (value != null)
+        {
+          var arr = value[0].split(",");
+          var valArr = Arrays.asList(arr);
+          this.userIdsParamValue.addAll(valArr);
+        }
+      }
+    }
+    else
+    {
+      var id = theRequestDetails.getId();
+      this.userIdsParamValue.add(id.getIdPart());
+    }
   }
 
   public void setupUser(String userId, UserType userType)

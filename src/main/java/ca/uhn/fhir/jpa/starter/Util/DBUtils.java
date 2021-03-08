@@ -9,7 +9,7 @@ public class DBUtils {
 
   static
   {
-      var connectionString = System.getenv("FHIR_PG_DATASOURCE_URL") + "/users";
+      var connectionString = System.getenv("FHIR_PG_DATASOURCE_URL") + "/" + System.getenv("FHIR_PG_DATASOURCE_TOKEN_DB");
       var postgresUser = System.getenv("FHIR_PG_DATASOURCE_USER_NAME");
       var postgresPass = System.getenv("FHIR_PG_DATASOURCE_PASSWORD");
       interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
