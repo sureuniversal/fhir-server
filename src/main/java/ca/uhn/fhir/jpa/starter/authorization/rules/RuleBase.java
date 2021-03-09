@@ -10,12 +10,9 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class RuleBase {
   protected String denyMessage;
@@ -23,8 +20,8 @@ public abstract class RuleBase {
   protected UserType userType;
 
   public RequestTypeEnum requestType;
-  protected List<String> userIdsParamValue;
-  private String[] userIdsParamName = new String[]{ "subject", "participant" };
+  protected List<String> idsParamValues;
+  private String[] userIdsParamName = new String[]{ "subject", "participant", "_has:PractitionerRole:practitioner:organization" };
 
   public Class<? extends IBaseResource> type;
 
@@ -62,7 +59,7 @@ public abstract class RuleBase {
   public void setUserIdsRequested(RequestDetails theRequestDetails)
   {
     var params = theRequestDetails.getParameters();
-    this.userIdsParamValue = new ArrayList<>();
+    this.idsParamValues = new ArrayList<>();
     if (params != null && !params.isEmpty())
     {
       for(var name : this.userIdsParamName)
@@ -72,7 +69,7 @@ public abstract class RuleBase {
         {
           var arr = value[0].split(",");
           var valArr = Arrays.asList(arr);
-          this.userIdsParamValue.addAll(valArr);
+          this.idsParamValues.addAll(valArr);
         }
       }
     }
@@ -80,7 +77,7 @@ public abstract class RuleBase {
     {
       try {
         var id = theRequestDetails.getId();
-        this.userIdsParamValue.add(id.getIdPart());
+        this.idsParamValues.add(id.getIdPart());
       } catch (Exception e) {
         e.printStackTrace();
       }
