@@ -50,18 +50,33 @@ public class PractitionerRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
-    List<IAuthRule> practitionerRule =
-      new RuleBuilder().allow().write().allResources().inCompartment("Practitioner",  RuleBase.toIdType(this.userId, "Practitioner")).build();
+    var ids = this.setupAllowedIdList();
 
-    List<IAuthRule> ruleList = new ArrayList<>();
-    List<IAuthRule> commonRules = commonRulesPost();
-    List<IAuthRule> denyRule = denyRule();
+    var existCounter = 0;
+    for (var allowedId : this.idsParamValues) {
+      if(ids.contains(allowedId))
+      {
+        existCounter++;
+      }
+    }
 
-    ruleList.addAll(practitionerRule);
-    ruleList.addAll(commonRules);
-    ruleList.addAll(denyRule);
+    if (existCounter == this.idsParamValues.size())
+    {
+      var allow = new RuleBuilder().allow().write().allResources().withAnyId();
 
-    return ruleList;
+      List<IAuthRule> patientRule = allow.build();
+      List<IAuthRule> commonRules = commonRulesPost();
+      List<IAuthRule> denyRule = denyRule();
+
+      List<IAuthRule> ruleList = new ArrayList<>();
+      ruleList.addAll(patientRule);
+      ruleList.addAll(commonRules);
+      ruleList.addAll(denyRule);
+
+      return ruleList;
+    }
+
+    return denyRule();
   }
 
   private List<String> setupAllowedIdList()
