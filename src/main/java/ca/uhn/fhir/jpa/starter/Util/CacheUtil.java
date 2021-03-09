@@ -52,7 +52,7 @@ public class CacheUtil {
         }
       }
     }
-    else
+    else if (theRequestDetails.getId() != null)
     {
       try {
         var id = theRequestDetails.getId();
