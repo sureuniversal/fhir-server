@@ -8,7 +8,6 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.Patient;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,7 @@ public class PatientRules extends RuleBase {
     var userIds = this.setupAllowedUsersList();
 
     var allExits = true;
-    for (var allowedId : this.userIdsParamValue) {
+    for (var allowedId : this.idsParamValues) {
       allExits = allExits & userIds.contains(allowedId);
     }
 
@@ -51,7 +50,7 @@ public class PatientRules extends RuleBase {
     var userIds = this.setupAllowedUsersList();
 
     var allExits = true;
-    for (var allowedId : this.userIdsParamValue) {
+    for (var allowedId : this.idsParamValues) {
       allExits = allExits & userIds.contains(allowedId);
     }
 
