@@ -76,7 +76,7 @@ public abstract class RuleBase {
         }
       }
     }
-    else
+    else if (theRequestDetails.getId() != null)
     {
       try {
         var id = theRequestDetails.getId();
