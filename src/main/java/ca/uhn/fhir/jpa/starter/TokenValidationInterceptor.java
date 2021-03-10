@@ -102,10 +102,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     {
       var cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
       var cachedRule = getCachedRuleIfExists(cacheKey);
-//      if (cachedRule != null)
-//    {
-//      return cachedRule.rules;
-//    }
+      if (cachedRule != null)
+    {
+      return cachedRule.rules;
+    }
 
       var userType = isPractitioner ? UserType.practitioner : UserType.patient;
       rule.setupUser(userId, userType);
