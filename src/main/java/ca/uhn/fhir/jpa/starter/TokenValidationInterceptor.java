@@ -86,9 +86,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         .build();
     }
 
-//    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
-//      return new RuleBuilder().allowAll().build();
-//    }
+    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.TRANSACTION){
+      return new RuleBuilder().allowAll().build();
+    }
 
     List<RuleBase>  ruleBase;
     try {
@@ -103,9 +103,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       var cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
       var cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
-      {
-        return cachedRule.rules;
-      }
+    {
+      return cachedRule.rules;
+    }
 
       var userType = isPractitioner ? UserType.practitioner : UserType.patient;
       rule.setupUser(userId, userType);
@@ -137,8 +137,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       case GET:
         return rule.handleGet();
       case PUT:
-      case DELETE:
       case PATCH:
+        return rule.handleUpdate();
+      case DELETE:
       case POST:
 //        if(Arrays.stream(scopes).noneMatch(s -> s.equals("w:resources:*")))
 //        {

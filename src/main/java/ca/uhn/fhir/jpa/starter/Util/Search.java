@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter.Util;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import org.apache.http.client.HttpClient;
@@ -122,12 +123,16 @@ public class Search {
 
   public static List<IIdType> getAllInOrganization(String organizationId)
   {
+    CacheControlDirective s = new CacheControlDirective();
+    s.setNoStore(true);
+    s.setNoCache(true);
+
     Bundle patientsList = (Bundle) client.search().forResource(Patient.class)
-      .where(new ReferenceClientParam("organization").hasId(organizationId))
+      .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
 
     Bundle practitionerList = (Bundle) client.search().forResource(PractitionerRole.class)
-      .where(new ReferenceClientParam("organization").hasId(organizationId))
+      .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
 
     var patientIds =
