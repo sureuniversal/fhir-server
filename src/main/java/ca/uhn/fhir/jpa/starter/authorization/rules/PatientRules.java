@@ -52,30 +52,31 @@ public class PatientRules extends RuleBase {
 
   public List<IAuthRule> handleUpdate()
   {
-    var userIds = this.setupAllowedUsersList();
-
-    var allExits = true;
-    for (var allowedId : this.idsParamValues) {
-      allExits = allExits & userIds.contains(allowedId);
-    }
-
-    if (allExits)
-    {
-      var allow = new RuleBuilder().allow().write().allResources().withAnyId();
-
-      List<IAuthRule> patientRule = allow.build();
-      List<IAuthRule> commonRules = commonRulesPost();
-      List<IAuthRule> denyRule = denyRule();
-
-      List<IAuthRule> ruleList = new ArrayList<>();
-      ruleList.addAll(patientRule);
-      ruleList.addAll(commonRules);
-      ruleList.addAll(denyRule);
-
-      return ruleList;
-    }
-
-    return denyRule();
+    return new RuleBuilder().allowAll().build();
+//    var userIds = this.setupAllowedUsersList();
+//
+//    var allExits = true;
+//    for (var allowedId : this.idsParamValues) {
+//      allExits = allExits & userIds.contains(allowedId);
+//    }
+//
+//    if (allExits)
+//    {
+//      var allow = new RuleBuilder().allow().write().allResources().withAnyId();
+//
+//      List<IAuthRule> patientRule = allow.build();
+//      List<IAuthRule> commonRules = commonRulesPost();
+//      List<IAuthRule> denyRule = denyRule();
+//
+//      List<IAuthRule> ruleList = new ArrayList<>();
+//      ruleList.addAll(patientRule);
+//      ruleList.addAll(commonRules);
+//      ruleList.addAll(denyRule);
+//
+//      return ruleList;
+//    }
+//
+//    return denyRule();
   }
 
   private List<String> setupAllowedUsersList()
