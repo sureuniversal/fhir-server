@@ -20,4 +20,9 @@ public class MetadataRules extends RuleBase {
   public List<IAuthRule> handlePost() {
     return new RuleBuilder().denyAll().build();
   }
+
+  public List<IAuthRule> handleUpdate()
+  {
+    return handlePost();
+  }
 }

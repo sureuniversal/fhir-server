@@ -65,6 +65,11 @@ public class DeviceMetricRules extends RuleBase {
     return ruleList;
   }
 
+  public List<IAuthRule> handleUpdate()
+  {
+    return handlePost();
+  }
+
   private List<IIdType> setupAllowedIdList()
   {
     List<IIdType> userIds = new ArrayList<>();

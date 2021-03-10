@@ -47,6 +47,11 @@ public class PatientRules extends RuleBase {
 
   @Override
   public List<IAuthRule> handlePost() {
+    return new RuleBuilder().allowAll().build();
+  }
+
+  public List<IAuthRule> handleUpdate()
+  {
     var userIds = this.setupAllowedUsersList();
 
     var allExits = true;

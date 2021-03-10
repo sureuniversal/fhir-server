@@ -130,7 +130,7 @@ public class Search {
     Bundle patientsList = (Bundle) client.search().forResource(Patient.class)
       .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
-   
+
     Bundle practitionerList = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
