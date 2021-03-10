@@ -44,6 +44,11 @@ public class OrganizationRules extends RuleBase{
     return ruleList;
   }
 
+  public List<IAuthRule> handleUpdate()
+  {
+    return handlePost();
+  }
+
   private IIdType getAllowedOrganization()
   {
     if (this.userType == UserType.patient)

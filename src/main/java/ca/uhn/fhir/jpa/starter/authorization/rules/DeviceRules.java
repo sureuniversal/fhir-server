@@ -21,4 +21,9 @@ public class DeviceRules extends RuleBase {
   public List<IAuthRule> handlePost() {
     return new RuleBuilder().allowAll().build();
   }
+
+  public List<IAuthRule> handleUpdate()
+  {
+    return handlePost();
+  }
 }

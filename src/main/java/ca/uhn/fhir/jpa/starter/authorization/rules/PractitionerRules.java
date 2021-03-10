@@ -79,6 +79,11 @@ public class PractitionerRules extends RuleBase {
     return denyRule();
   }
 
+  public List<IAuthRule> handleUpdate()
+  {
+    return handlePost();
+  }
+
   private List<String> setupAllowedIdList()
   {
     List<IIdType> allowedIds = new ArrayList<>();
