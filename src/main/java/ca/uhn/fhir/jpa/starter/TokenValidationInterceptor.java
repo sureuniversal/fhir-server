@@ -90,6 +90,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       return new RuleBuilder().allowAll().build();
     }
 
+
+    if(theRequestDetails.getRestOperationType() == RestOperationTypeEnum.GET_PAGE){
+      return new RuleBuilder()
+        .allowAll("get-page")
+        .build();
+    }
+
     List<RuleBase>  ruleBase;
     try {
       ruleBase = SecurityRulesUtil.rulesFactory(theRequestDetails);
