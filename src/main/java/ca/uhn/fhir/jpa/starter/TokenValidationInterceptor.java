@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.jpa.starter.Models.AuthRulesWrapper;
+import ca.uhn.fhir.jpa.starter.Models.CacheRecord;
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
 import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.jpa.starter.Util.CacheUtil;
@@ -20,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Interceptor
 public class TokenValidationInterceptor extends AuthorizationInterceptor {
-  private final static Map ruleCache = new ConcurrentHashMap<String, AuthRulesWrapper> ();
-  private final static Map tokenCache = new ConcurrentHashMap<String, TokenRecord>();
+  private final static Map<String, CacheRecord> ruleCache = new ConcurrentHashMap<>();
+  private final static Map<String, CacheRecord> tokenCache = new ConcurrentHashMap<>();
   public static Timer cacheTimer = new Timer("cache Timer",true);
 
   static
@@ -97,21 +98,22 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       throw new IllegalStateException(e.getMessage());
     }
 
-    List<IAuthRule> rulesList = new ArrayList();
+    List<IAuthRule> rulesList = new ArrayList<>();
     for (var rule : ruleBase)
     {
-      var cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
-      var cachedRule = getCachedRuleIfExists(cacheKey);
+      String cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
+      AuthRulesWrapper cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
     {
       return cachedRule.rules;
     }
 
-      var userType = isPractitioner ? UserType.practitioner : UserType.patient;
+      UserType userType = isPractitioner ? UserType.practitioner : UserType.patient;
       rule.setupUser(userId, userType);
       rule.setUserIdsRequested(theRequestDetails);
+      rule.setResourceRequested(theRequestDetails);
 
-      var result = HandleRule(rule,scopes);
+      List<IAuthRule> result = HandleRule(rule,scopes);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
       rulesList.addAll(result);
     }

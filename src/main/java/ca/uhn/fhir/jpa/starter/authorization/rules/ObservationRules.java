@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.r4.model.Observation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ObservationRules extends PatientRules {
@@ -11,13 +12,29 @@ public class ObservationRules extends PatientRules {
     this.denyMessage = "cant access Observation";
     this.type = Observation.class;
   }
-  // sec rules updates
-  // We need to check if the request body to see if the subject for the observation is referencing the sending user
+
   @Override
   public List<IAuthRule> handlePost() {
-    return new RuleBuilder().allowAll().build();
+    String observationSubject = ((Observation)inResource).getSubject().getReferenceElement().getIdPart();
+    if (userId.equalsIgnoreCase(observationSubject))
+    {
+      List<IAuthRule> observationRule = new RuleBuilder().allow().write().allResources().withAnyId().build();
+      List<IAuthRule> commonRules = commonRulesGet();
+      List<IAuthRule> denyRule = denyRule();
+
+      List<IAuthRule> ruleList = new ArrayList<>();
+      ruleList.addAll(observationRule);
+      ruleList.addAll(commonRules);
+      ruleList.addAll(denyRule);
+
+      return ruleList;
+    } else {
+      return denyRule();
+    }
   }
 
-  // sec rules updates
-  // override handleUpdate and give it a deny all for an observation
+  @Override
+  public List<IAuthRule> handleUpdate(){
+    return denyRule();
+  }
 }

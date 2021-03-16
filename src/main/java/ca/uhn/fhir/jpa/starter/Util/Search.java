@@ -147,4 +147,9 @@ public class Search {
 
     return ids;
   }
+
+  public static IIdType getPatientOrganization(String userId) {
+    Patient patient = client.read().resource(Patient.class).withId(userId).execute();
+    return patient.getManagingOrganization().getReferenceElement().toUnqualifiedVersionless();
+  }
 }
