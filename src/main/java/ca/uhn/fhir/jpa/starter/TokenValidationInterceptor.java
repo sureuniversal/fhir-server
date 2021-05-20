@@ -68,13 +68,13 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       }
 
       if(tokenRecord.is_practitioner()){
-        tokenRecord.isAdmin = Search.isPractitionerAdmin(tokenRecord.getId());
+        tokenRecord.setType(Search.getPractitionerType(tokenRecord.getId()));
       }
 
       tokenCache.put(token, tokenRecord);
     }
 
-    boolean isAdmin = tokenRecord.isAdmin;
+    boolean isAdmin = tokenRecord.isAdmin();
     boolean isPractitioner = tokenRecord.is_practitioner();
     String userId = tokenRecord.getId();
     String[] scopes = tokenRecord.getScopes();
@@ -104,21 +104,21 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       throw new IllegalStateException(e.getMessage());
     }
 
-    List<IAuthRule> rulesList = new ArrayList();
+    List<IAuthRule> rulesList = new ArrayList<>();
     for (var rule : ruleBase)
     {
-      var cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
-      var cachedRule = getCachedRuleIfExists(cacheKey);
+      String cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
+      AuthRulesWrapper cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
     {
       return cachedRule.rules;
     }
 
-      var userType = isPractitioner ? UserType.practitioner : UserType.patient;
+      UserType userType = isPractitioner ? UserType.practitioner : UserType.patient;
       rule.setupUser(userId, userType);
       rule.setUserIdsRequested(theRequestDetails);
 
-      var result = HandleRule(rule,scopes);
+      List<IAuthRule> result = HandleRule(rule,scopes);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
       rulesList.addAll(result);
     }

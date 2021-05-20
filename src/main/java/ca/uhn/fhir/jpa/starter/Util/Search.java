@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter.Util;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
@@ -87,15 +88,19 @@ public class Search {
     return patients;
   }
 
-  public static boolean isPractitionerAdmin(String practitioner){
-    var roles = getPractitionerRole(practitioner);
-    var isAdmin = roles.stream().anyMatch(e ->
-    {
-      var identifier = e.getIdentifier();
-      return identifier.stream().anyMatch(id -> id.getValue().equals("admin"));
-    });
+  public static TokenRecord.PractitionerType getPractitionerType(String practitioner){
+    List<PractitionerRole> roles = getPractitionerRole(practitioner);
 
-    return isAdmin;
+    for (var r : roles) {
+      if (r.getCode().stream().anyMatch(c-> c.hasCoding("http://snomed.info/sct","56542007"))){
+        if(r.hasOrganization())
+          return TokenRecord.PractitionerType.organizationAdmin;
+        else
+          return TokenRecord.PractitionerType.superAdmin;
+      }
+    }
+
+    return TokenRecord.PractitionerType.noAdmin;
   }
 
   public static IIdType getPractitionerOrganization(String practitioner){
@@ -114,11 +119,9 @@ public class Search {
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
       .execute();
 
-    var practitionerRoles = role.getEntry().stream()
+    return role.getEntry().stream()
       .map(e -> (PractitionerRole) e.getResource())
       .collect(Collectors.toList());
-
-    return practitionerRoles;
   }
 
   public static List<IIdType> getAllInOrganization(String organizationId)
