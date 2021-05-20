@@ -75,7 +75,7 @@ public class PatientRules extends RuleBase {
   {
     List<IIdType> userIds = new ArrayList<>();
     var careTeamUsers = handleCareTeam();
-    var organizationUsers = Search.getAllInOrganization(this.userId);
+    var organizationUsers = Search.getAllInOrganization(getAllowedOrganization().getIdPart());
 
     userIds.addAll(careTeamUsers);
     userIds.addAll(organizationUsers);
@@ -87,5 +87,15 @@ public class PatientRules extends RuleBase {
 
     var idsList = userIds.stream().map(e -> e.getIdPart()).collect(Collectors.toList());
     return idsList;
+  }
+
+  private IIdType getAllowedOrganization()
+  {
+    if (this.userType == UserType.patient)
+    {
+      return RuleBase.toIdType(this.userId, "Organization");
+    }
+
+    return Search.getPractitionerOrganization(this.userId);
   }
 }
