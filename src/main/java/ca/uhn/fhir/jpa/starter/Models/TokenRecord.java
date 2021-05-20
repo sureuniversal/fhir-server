@@ -6,11 +6,13 @@ public class TokenRecord extends CacheRecord {
   final String id;
   final String token;
   final boolean is_practitioner;
-  public boolean isAdmin = false;
+  PractitionerType type = PractitionerType.noAdmin;
   final long issuedDate;
   final long expiresIn;
   final long recordTtl;
   final String[] scopes;
+
+  public enum PractitionerType{noAdmin,organizationAdmin,superAdmin}
 
   public TokenRecord(String id, String token, boolean is_practitioner, long issuedDate, long expiresIn, String[] scopes) {
     this.id = id;
@@ -48,5 +50,17 @@ public class TokenRecord extends CacheRecord {
 
   public String[] getScopes() {
     return scopes;
+  }
+
+  public boolean isAdmin(){
+    return type==PractitionerType.superAdmin;
+  }
+
+  public PractitionerType getType() {
+    return type;
+  }
+
+  public void setType(PractitionerType type) {
+    this.type = type;
   }
 }
