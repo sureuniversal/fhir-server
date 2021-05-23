@@ -2,6 +2,7 @@ package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.jpa.starter.Util.CareTeamSearch;
 import ca.uhn.fhir.jpa.starter.Models.UserType;
+import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
@@ -56,6 +57,16 @@ public abstract class RuleBase {
 
   protected static IIdType toIdType(String id, String resourceType) {
     return new IdType(resourceType, id);
+  }
+
+  protected IIdType getAllowedOrganization()
+  {
+    if (this.userType == UserType.patient)
+    {
+      return RuleBase.toIdType(this.userId, "Organization");
+    }
+
+    return Search.getPractitionerOrganization(this.userId);
   }
 
   public void setUserIdsRequested(RequestDetails theRequestDetails)
