@@ -139,10 +139,10 @@ public class Search {
       .execute();
 
     var patientIds =
-      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement()).collect(Collectors.toList());
+      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement().toUnqualifiedVersionless()).collect(Collectors.toList());
 
     var practitionerIds =
-      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement()).collect(Collectors.toList());
+      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement().toUnqualifiedVersionless()).collect(Collectors.toList());
 
     List<IIdType> ids = new ArrayList<>();
     ids.addAll(practitionerIds);
