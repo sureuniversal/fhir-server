@@ -70,6 +70,9 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       if(tokenRecord.is_practitioner()){
         tokenRecord.setType(Search.getPractitionerType(tokenRecord.getId()));
       }
+      else {
+        tokenRecord.setType(UserType.patient);
+      }
 
       tokenCache.put(token, tokenRecord);
     }
@@ -114,7 +117,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       return cachedRule.rules;
     }
 
-      UserType userType = isPractitioner ? UserType.practitioner : UserType.patient;
+      UserType userType = tokenRecord.getType();
       rule.setupUser(userId, userType);
       rule.setUserIdsRequested(theRequestDetails);
 

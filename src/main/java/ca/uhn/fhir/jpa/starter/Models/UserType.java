@@ -1,5 +1,5 @@
 package ca.uhn.fhir.jpa.starter.Models;
 
 public enum UserType{
-  patient, practitioner
+  patient, practitioner, superAdmin,organizationAdmin
 }
