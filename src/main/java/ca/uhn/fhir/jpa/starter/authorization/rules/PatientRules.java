@@ -72,7 +72,7 @@ public class PatientRules extends RuleBase {
     if (this.requestResource != null && userOrganization != null)
     {
       Patient resource = (Patient) this.requestResource;
-      if (resource.getManagingOrganization().getId().compareTo(userOrganization.getIdPart()) == 0)
+      if (resource.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
       {
         return new RuleBuilder().allowAll().build();
       }

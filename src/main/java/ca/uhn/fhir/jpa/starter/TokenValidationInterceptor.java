@@ -121,7 +121,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       AuthRulesWrapper cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
       {
-       //  return cachedRule.rules;
+       // return cachedRule.rules;
       }
 
       UserType userType = tokenRecord.getType();
