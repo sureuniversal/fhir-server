@@ -25,12 +25,13 @@ public class PractitionerRules extends RuleBase {
 
     var existCounter = 0;
     for (var allowedId : this.idsParamValues) {
-      if(ids.contains(allowedId))
+      var filtered = ids.stream().filter(e -> e != null && allowedId.contains(e));
+      if(filtered.count() > 0)
       {
         existCounter++;
       }
 
-      if (allowedOrganization != null && allowedOrganization.getIdPart().compareTo(allowedId) == 0)
+      if (allowedOrganization != null && allowedId.contains(allowedOrganization.getIdPart()))
       {
         existCounter++;
       }
@@ -77,12 +78,12 @@ public class PractitionerRules extends RuleBase {
     }
     else
     {
-      var userOrganization = Search.getPatientOrganization(this.userId);
       var careTeams = CareTeamSearch.getAllowedCareTeamAsSubject(this.userId).stream().map(e -> e.getIdPart()).collect(Collectors.toList());
       var usersInCareTeam = CareTeamSearch.getAllUsersInCareTeams(careTeams)
-        .stream().filter(e -> e.getResourceType().compareTo("Practitioner") == 0)
+        .stream().filter(e -> e != null)
         .map(e -> e.getIdPart()).collect(Collectors.toList());
 
+      var userOrganization = Search.getPatientOrganization(this.userId);
       var practitioners =
         Search.getAllPractitionersInOrganization(userOrganization.getIdPart()).stream().map(e -> e.getIdPart()).collect(Collectors.toList());
       practitioners.addAll(usersInCareTeam);

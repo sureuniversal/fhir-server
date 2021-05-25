@@ -31,12 +31,13 @@ public class PatientRules extends RuleBase {
 
     var existCounter = 0;
     for (var allowedId : this.idsParamValues) {
-      if(userIds.contains(allowedId))
+      var filtered = userIds.stream().filter(e -> e != null && allowedId.contains(e));
+      if(filtered.count() > 0)
       {
         existCounter++;
       }
 
-      if (allowedOrganization != null && allowedOrganization.getIdPart().compareTo(allowedId) == 0)
+      if (allowedOrganization != null && allowedId.contains(allowedOrganization.getIdPart()))
       {
         existCounter++;
       }
@@ -117,7 +118,7 @@ public class PatientRules extends RuleBase {
   private List<String> setupAllowedUserIdList()
   {
     List<IIdType> userIds = new ArrayList<>();
-    if (this.userType == UserType.organizationAdmin)
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.patient)
     {
       var organizationUsers = Search.getAllPatientsInOrganization(getAllowedOrganization().getIdPart());
       userIds.addAll(organizationUsers);
