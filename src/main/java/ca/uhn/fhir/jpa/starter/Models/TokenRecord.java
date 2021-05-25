@@ -53,7 +53,7 @@ public class TokenRecord extends CacheRecord {
   }
 
   public boolean isAdmin(){
-    return type==UserType.superAdmin;
+    return type == UserType.superAdmin;
   }
 
   public UserType getType() {

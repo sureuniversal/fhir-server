@@ -7,6 +7,7 @@ import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -90,42 +91,70 @@ public class Search {
   }
 
   public static UserType getPractitionerType(String practitioner){
-    List<PractitionerRole> roles = getPractitionerRole(practitioner);
+    var role = getPractitionerRole(practitioner);
 
-    for (var r : roles) {
-      if (r.getCode().stream().anyMatch(c-> c.hasCoding("http://snomed.info/sct","56542007"))){
-        if(r.hasOrganization())
-          return UserType.organizationAdmin;
-        else
-          return UserType.superAdmin;
-      }
+    if (role == null)
+    {
+      return null;
+    }
+
+    if (!role.hasOrganization())
+    {
+      return UserType.superAdmin;
+    }
+
+    if (role.getCode().stream().anyMatch(c-> c.hasCoding("http://snomed.info/sct","56542007"))){
+        return UserType.organizationAdmin;
     }
 
     return UserType.practitioner;
   }
 
-  public static IIdType getPractitionerOrganization(String practitioner){
-    var roles = getPractitionerRole(practitioner);
-    if (roles.isEmpty())
+  public static Patient getPatientById(String patientId){
+    Bundle bundle = (Bundle) client.search().forResource(Patient.class)
+      .where(new TokenClientParam("_id").exactly().code(patientId))
+      .execute();
+
+    if (bundle.getEntry().isEmpty())
     {
       return null;
     }
 
-    var role = roles.get(0);
+    return ((Patient)(bundle.getEntry().get(0).getResource()));
+  }
+
+  public static IIdType getPatientOrganization(String patientId){
+    Bundle bundle = (Bundle) client.search().forResource(Patient.class)
+      .where(new TokenClientParam("_id").exactly().code(patientId))
+      .execute();
+
+    if (bundle.getEntry().isEmpty())
+    {
+      return null;
+    }
+
+    return ((Patient)(bundle.getEntry().get(0).getResource())).getManagingOrganization().getReferenceElement();
+  }
+
+  public static IIdType getPractitionerOrganization(String practitioner){
+    var role = getPractitionerRole(practitioner);
     return role.getOrganization().getReferenceElement();
   }
 
-  public static List<PractitionerRole> getPractitionerRole(String practitioner){
+  public static PractitionerRole getPractitionerRole(String practitioner){
     Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("practitioner").hasId(practitioner))
       .execute();
 
-    return role.getEntry().stream()
-      .map(e -> (PractitionerRole) e.getResource())
-      .collect(Collectors.toList());
+    if (role.getEntry().isEmpty())
+    {
+      return null;
+    }
+
+    return (PractitionerRole) role.getEntry().get(0).getResource();
   }
 
-  public static List<IIdType> getAllInOrganization(String organizationId)
+  public static List<IIdType> getAllPatientsInOrganization(String organizationId)
   {
     CacheControlDirective s = new CacheControlDirective();
     s.setNoStore(true);
@@ -135,20 +164,30 @@ public class Search {
       .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
 
+    var patientIds =
+      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement().toUnqualifiedVersionless()).collect(Collectors.toList());
+
+    List<IIdType> ids = new ArrayList<>();
+    ids.addAll(patientIds);
+    return ids;
+  }
+
+  public static List<IIdType> getAllPractitionersInOrganization(String organizationId)
+  {
+    CacheControlDirective s = new CacheControlDirective();
+    s.setNoStore(true);
+    s.setNoCache(true);
+
     Bundle practitionerList = (Bundle) client.search().forResource(PractitionerRole.class)
       .where(new ReferenceClientParam("organization").hasId(organizationId)).cacheControl(s)
       .execute();
 
-    var patientIds =
-      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement().toUnqualifiedVersionless()).collect(Collectors.toList());
-
     var practitionerIds =
-      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement().toUnqualifiedVersionless()).collect(Collectors.toList());
+      practitionerList.getEntry().stream()
+        .map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement().toUnqualifiedVersionless()).collect(Collectors.toList());
 
     List<IIdType> ids = new ArrayList<>();
     ids.addAll(practitionerIds);
-    ids.addAll(patientIds);
-
     return ids;
   }
 }

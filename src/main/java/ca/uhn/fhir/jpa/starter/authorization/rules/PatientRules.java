@@ -1,10 +1,12 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.jpa.starter.Models.UserType;
+import ca.uhn.fhir.jpa.starter.Util.CareTeamSearch;
 import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Patient;
 
 import java.util.ArrayList;
@@ -24,7 +26,8 @@ public class PatientRules extends RuleBase {
   // then we should allow the request if it has that parameter as well
   @Override
   public List<IAuthRule> handleGet() {
-    var userIds = this.setupAllowedUsersList();
+    var userIds = this.setupAllowedUserIdList();
+    var allowedOrganization = this.GetUserOrganization();
 
     var existCounter = 0;
     for (var allowedId : this.idsParamValues) {
@@ -32,9 +35,14 @@ public class PatientRules extends RuleBase {
       {
         existCounter++;
       }
+
+      if (allowedOrganization != null && allowedOrganization.getIdPart().compareTo(allowedId) == 0)
+      {
+        existCounter++;
+      }
     }
 
-    if (existCounter == this.idsParamValues.size())
+    if (existCounter >= this.idsParamValues.size())
     {
       var allow = new RuleBuilder().allow().read().allResources().withAnyId();
 
@@ -59,7 +67,17 @@ public class PatientRules extends RuleBase {
   // see <ref> Search.getPractitionerOrganization </ref> for Practitioner
   @Override
   public List<IAuthRule> handlePost() {
-    return new RuleBuilder().allowAll().build();
+    IIdType userOrganization = this.GetUserOrganization();
+    if (this.requestResource != null && userOrganization != null)
+    {
+      Patient resource = (Patient) this.requestResource;
+      if (resource.getManagingOrganization().getId().compareTo(userOrganization.getIdPart()) == 0)
+      {
+        return new RuleBuilder().allowAll().build();
+      }
+    }
+
+    return new RuleBuilder().denyAll("The added patient organization is not equal to the user organization").build();
   }
 
   // sec rules updates
@@ -68,25 +86,60 @@ public class PatientRules extends RuleBase {
   // see <ref> Search.getPractitionerOrganization </ref> for Practitioner
   public List<IAuthRule> handleUpdate()
   {
-    return new RuleBuilder().allowAll().build();
+    Patient updatingPatient = Search.getPatientById(this.requestResourceId.getIdPart());
+    IIdType userOrganization = this.GetUserOrganization();
+    if (updatingPatient != null && userOrganization != null)
+    {
+      if (updatingPatient.getManagingOrganization().getId().compareTo(userOrganization.getIdPart()) == 0)
+      {
+        return new RuleBuilder().allowAll().build();
+      }
+    }
+
+    return new RuleBuilder().denyAll("Not Allowed to delete patient").build();
   }
 
-  private List<String> setupAllowedUsersList()
+  private IIdType GetUserOrganization()
+  {
+    IIdType userOrganization;
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.practitioner)
+    {
+      userOrganization = Search.getPractitionerOrganization(this.userId);
+    }
+    else
+    {
+      userOrganization = Search.getPatientOrganization(this.userId);
+    }
+
+    return userOrganization;
+  }
+
+  private List<String> setupAllowedUserIdList()
   {
     List<IIdType> userIds = new ArrayList<>();
-    var careTeamUsers = handleCareTeam();
-    var organizationUsers = Search.getAllInOrganization(getAllowedOrganization().getIdPart());
-
-    userIds.addAll(careTeamUsers);
-    userIds.addAll(organizationUsers);
+    if (this.userType == UserType.organizationAdmin)
+    {
+      var organizationUsers = Search.getAllPatientsInOrganization(getAllowedOrganization().getIdPart());
+      userIds.addAll(organizationUsers);
+    }
 
     if (this.userType == UserType.patient)
     {
+      var careTeams =
+        CareTeamSearch
+        .getAllowedCareTeamAsSubject(this.userId)
+          .stream().map(IIdType::getIdPart).collect(Collectors.toList());
+
+      userIds.addAll(CareTeamSearch.getAllUsersInCareTeams(careTeams));
       userIds.add(RuleBase.toIdType(this.userId, "Patient"));
+    }
+
+    if (this.userType == UserType.practitioner)
+    {
+      userIds.addAll(CareTeamSearch.getSubjectsOfCareTeamsSearchingByParticipant(this.userId));
     }
 
     var idsList = userIds.stream().map(e -> e.getIdPart()).collect(Collectors.toList());
     return idsList;
   }
-
 }
