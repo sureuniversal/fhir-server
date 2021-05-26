@@ -19,7 +19,6 @@ public class PatientRules extends RuleBase {
     this.type = Patient.class;
   }
 
-
   // sec rules updates
   // We need to also check if the request has an organization parameter ex: Patient?organization=48b07dfb-1b3d-4232-b74c-5efec04ee3d7
   // follow how <ref> idsParamValues </ref> is being built in RuleBase see <ref> setUserIdsRequested </ref>
@@ -32,7 +31,7 @@ public class PatientRules extends RuleBase {
      return new RuleBuilder().allowAll().build();
    }
 
-   return denyRule();
+   return new RuleBuilder().denyAll("Cant add Resource").build();
   }
 
   // sec rules updates
