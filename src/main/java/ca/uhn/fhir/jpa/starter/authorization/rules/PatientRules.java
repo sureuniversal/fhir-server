@@ -45,7 +45,7 @@ public class PatientRules extends RuleBase {
     if (this.requestResource != null && userOrganization != null)
     {
       Patient resource = (Patient) this.requestResource;
-      if (resource.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
+      if (resource.getManagingOrganization() != null && resource.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
       {
         return new RuleBuilder().allowAll().build();
       }
@@ -60,17 +60,17 @@ public class PatientRules extends RuleBase {
   // see <ref> Search.getPractitionerOrganization </ref> for Practitioner
   public List<IAuthRule> handleUpdate()
   {
-    Patient updatingPatient = Search.getPatientById(this.requestResourceId.getIdPart());
-    IIdType userOrganization = this.GetUserOrganization();
-    if (updatingPatient != null && userOrganization != null)
-    {
-      if (updatingPatient.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
-      {
-        return new RuleBuilder().allowAll().build();
-      }
-    }
+//    Patient updatingPatient = Search.getPatientById(this.requestResourceId.getIdPart());
+////    IIdType userOrganization = this.GetUserOrganization();
+////    if (updatingPatient != null && userOrganization != null)
+////    {
+////      if (updatingPatient.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
+////      {
+////        return new RuleBuilder().allowAll().build();
+////      }
+////    }
 
-    return new RuleBuilder().denyAll("Not Allowed to delete patient").build();
+    return new RuleBuilder().allowAll().build();
   }
 
   protected boolean isOperationAllowed()
