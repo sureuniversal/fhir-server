@@ -26,40 +26,13 @@ public class PatientRules extends RuleBase {
   // then we should allow the request if it has that parameter as well
   @Override
   public List<IAuthRule> handleGet() {
-    var userIds = this.setupAllowedUserIdList();
-    var allowedOrganization = this.GetUserOrganization();
+   var allowed = this.isOperationAllowed();
+   if(allowed)
+   {
+     return new RuleBuilder().allowAll().build();
+   }
 
-    var existCounter = 0;
-    for (var allowedId : this.idsParamValues) {
-      var filtered = userIds.stream().filter(e -> e != null && allowedId.contains(e));
-      if(filtered.count() > 0)
-      {
-        existCounter++;
-      }
-
-      if (allowedOrganization != null && allowedId.contains(allowedOrganization.getIdPart()))
-      {
-        existCounter++;
-      }
-    }
-
-    if (existCounter >= this.idsParamValues.size())
-    {
-      var allow = new RuleBuilder().allow().read().allResources().withAnyId();
-
-      List<IAuthRule> patientRule = allow.build();
-      List<IAuthRule> commonRules = commonRulesGet();
-      List<IAuthRule> denyRule = denyRule();
-
-      List<IAuthRule> ruleList = new ArrayList<>();
-      ruleList.addAll(patientRule);
-      ruleList.addAll(commonRules);
-      ruleList.addAll(denyRule);
-
-      return ruleList;
-    }
-
-    return denyRule();
+   return denyRule();
   }
 
   // sec rules updates
@@ -91,13 +64,41 @@ public class PatientRules extends RuleBase {
     IIdType userOrganization = this.GetUserOrganization();
     if (updatingPatient != null && userOrganization != null)
     {
-      if (updatingPatient.getManagingOrganization().getId().compareTo(userOrganization.getIdPart()) == 0)
+      if (updatingPatient.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
       {
         return new RuleBuilder().allowAll().build();
       }
     }
 
     return new RuleBuilder().denyAll("Not Allowed to delete patient").build();
+  }
+
+  protected boolean isOperationAllowed()
+  {
+    var userIds = this.setupAllowedUserIdList();
+    var allowedOrganization = this.GetUserOrganization();
+
+    var existCounter = 0;
+    for (var allowedId : this.idsParamValues) {
+      // allowedId.contains(e) is a security concern
+      var filtered = userIds.stream().filter(e -> e != null && allowedId.contains(e));
+      if(filtered.count() > 0)
+      {
+        existCounter++;
+      }
+
+      if (allowedOrganization != null && allowedId.contains(allowedOrganization.getIdPart()))
+      {
+        existCounter++;
+      }
+    }
+
+    if (existCounter >= this.idsParamValues.size())
+    {
+      return true;
+    }
+
+    return false;
   }
 
   private IIdType GetUserOrganization()

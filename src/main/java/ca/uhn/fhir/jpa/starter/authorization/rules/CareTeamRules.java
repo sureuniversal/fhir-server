@@ -20,6 +20,7 @@ public class CareTeamRules extends PatientRules{
 
   @Override
   public List<IAuthRule> handleGet() {
+    var operationAllowed = super.isOperationAllowed();
     var allowedCareTeamList = this.setupAllowedCareTeamList().stream().map(e -> e.getIdPart()).collect(Collectors.toList());
 
     var existCounter = 0;
@@ -35,20 +36,9 @@ public class CareTeamRules extends PatientRules{
       }
     }
 
-    if (existCounter >= this.idsParamValues.size())
+    if (existCounter >= this.idsParamValues.size() || operationAllowed)
     {
-      var allow = new RuleBuilder().allow().read().allResources().withAnyId();
-
-      List<IAuthRule> patientRule = allow.build();
-      List<IAuthRule> commonRules = commonRulesGet();
-      List<IAuthRule> denyRule = denyRule();
-
-      List<IAuthRule> ruleList = new ArrayList<>();
-      ruleList.addAll(patientRule);
-      ruleList.addAll(commonRules);
-      ruleList.addAll(denyRule);
-
-      return ruleList;
+      return new RuleBuilder().allowAll().build();
     }
 
     return denyRule();
