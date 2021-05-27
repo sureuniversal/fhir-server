@@ -5,6 +5,7 @@ import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -69,12 +70,22 @@ public abstract class RuleBase {
 
   protected IIdType getAllowedOrganization()
   {
-    if (this.userType == UserType.patient)
+    IIdType userOrganization;
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.practitioner)
     {
-      return RuleBase.toIdType(this.userId, "Organization");
+      userOrganization = Search.getPractitionerOrganization(this.userId);
+    }
+    else
+    {
+      userOrganization = Search.getPatientOrganization(this.userId);
     }
 
-    return Search.getPractitionerOrganization(this.userId);
+    if (userOrganization == null)
+    {
+      throw InvalidRequestException.newInstance(400, "User Has no organization");
+    }
+
+    return userOrganization;
   }
 
   // This might has a security hole in same id for different resources

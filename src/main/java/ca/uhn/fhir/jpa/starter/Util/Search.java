@@ -133,7 +133,13 @@ public class Search {
       return null;
     }
 
-    return ((Patient)(bundle.getEntry().get(0).getResource())).getManagingOrganization().getReferenceElement();
+    var patientObj = ((Patient)(bundle.getEntry().get(0).getResource()));
+    if (patientObj.getManagingOrganization() == null || !patientObj.getManagingOrganization().hasReference())
+    {
+      return null;
+    }
+
+    return patientObj.getManagingOrganization().getReferenceElement();
   }
 
   public static IIdType getPractitionerOrganization(String practitioner){
