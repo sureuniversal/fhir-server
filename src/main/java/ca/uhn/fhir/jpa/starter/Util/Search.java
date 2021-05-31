@@ -3,6 +3,7 @@ package ca.uhn.fhir.jpa.starter.Util;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
+import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
@@ -88,19 +89,19 @@ public class Search {
     return patients;
   }
 
-  public static TokenRecord.PractitionerType getPractitionerType(String practitioner){
+  public static UserType getPractitionerType(String practitioner){
     List<PractitionerRole> roles = getPractitionerRole(practitioner);
 
     for (var r : roles) {
       if (r.getCode().stream().anyMatch(c-> c.hasCoding("http://snomed.info/sct","56542007"))){
         if(r.hasOrganization())
-          return TokenRecord.PractitionerType.organizationAdmin;
+          return UserType.organizationAdmin;
         else
-          return TokenRecord.PractitionerType.superAdmin;
+          return UserType.superAdmin;
       }
     }
 
-    return TokenRecord.PractitionerType.noAdmin;
+    return UserType.practitioner;
   }
 
   public static IIdType getPractitionerOrganization(String practitioner){
@@ -139,10 +140,10 @@ public class Search {
       .execute();
 
     var patientIds =
-      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement()).collect(Collectors.toList());
+      patientsList.getEntry().stream().map(e -> e.getResource().getIdElement().toUnqualifiedVersionless()).collect(Collectors.toList());
 
     var practitionerIds =
-      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement()).collect(Collectors.toList());
+      practitionerList.getEntry().stream().map(e -> ((PractitionerRole) e.getResource()).getPractitioner().getReferenceElement().toUnqualifiedVersionless()).collect(Collectors.toList());
 
     List<IIdType> ids = new ArrayList<>();
     ids.addAll(practitionerIds);

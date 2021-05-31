@@ -89,13 +89,4 @@ public class PatientRules extends RuleBase {
     return idsList;
   }
 
-  private IIdType getAllowedOrganization()
-  {
-    if (this.userType == UserType.patient)
-    {
-      return RuleBase.toIdType(this.userId, "Organization");
-    }
-
-    return Search.getPractitionerOrganization(this.userId);
-  }
 }
