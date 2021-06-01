@@ -78,7 +78,11 @@ public class PatientRules extends RuleBase {
   protected boolean isOperationAllowed()
   {
     var userIds = this.setupAllowedUserIdList();
-    var allowedOrganization = this.GetUserOrganization();
+    IIdType allowedOrganization = null;
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.patient)
+    {
+      allowedOrganization = this.GetUserOrganization();
+    }
 
     var existCounter = 0;
     for (var allowedId : this.idsParamValues) {
