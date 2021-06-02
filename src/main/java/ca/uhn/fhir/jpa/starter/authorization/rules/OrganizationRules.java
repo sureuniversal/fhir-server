@@ -5,11 +5,17 @@ import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.r4.model.Organization;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrganizationRules extends RuleBase{
+
+  public OrganizationRules() {
+    this.type = Organization.class;
+    this.denyMessage = "Organization Rule";
+  }
 
   @Override
   public List<IAuthRule> handleGet() {
