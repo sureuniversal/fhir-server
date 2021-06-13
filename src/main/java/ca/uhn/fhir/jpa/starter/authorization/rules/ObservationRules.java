@@ -52,7 +52,7 @@ public class ObservationRules extends PatientRules {
   private List<String> GetAllowedUsersToAddAnObs()
   {
     List<IIdType> userIds = new ArrayList<>();
-    if (this.userType == UserType.organizationAdmin)
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.patient)
     {
       var organizationUsers = Search.getAllPatientsInOrganization(getAllowedOrganization().getIdPart());
       userIds.addAll(organizationUsers);

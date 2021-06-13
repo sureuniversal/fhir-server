@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PatientRules extends RuleBase {
+
   public PatientRules() {
     this.denyMessage = "Patient Rule";
     this.type = Patient.class;
@@ -93,7 +94,7 @@ public class PatientRules extends RuleBase {
         existCounter++;
       }
 
-      if (allowedOrganization != null && allowedId.contains(allowedOrganization.getIdPart()))
+      if (allowedOrganization != null && allowedOrganization.hasIdPart() && allowedId.contains(allowedOrganization.getIdPart()))
       {
         existCounter++;
       }
