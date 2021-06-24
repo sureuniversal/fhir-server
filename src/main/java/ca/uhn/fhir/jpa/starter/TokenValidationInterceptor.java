@@ -67,6 +67,12 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .build();
       }
 
+      if (tokenRecord.getStatus() != null && tokenRecord.getStatus().equalsIgnoreCase("closed")) {
+        return new RuleBuilder()
+          .denyAll("status: closed")
+          .build();
+      }
+
       if(tokenRecord.is_practitioner()){
         UserType userType = Search.getPractitionerType(tokenRecord.getId());
         if (userType == null)
