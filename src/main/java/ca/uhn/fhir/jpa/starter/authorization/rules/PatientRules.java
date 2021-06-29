@@ -63,16 +63,6 @@ public class PatientRules extends RuleBase {
   // see <ref> Search.getPractitionerOrganization </ref> for Practitioner
   public List<IAuthRule> handleUpdate()
   {
-//    Patient updatingPatient = Search.getPatientById(this.requestResourceId.getIdPart());
-////    IIdType userOrganization = this.GetUserOrganization();
-////    if (updatingPatient != null && userOrganization != null)
-////    {
-////      if (updatingPatient.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
-////      {
-////        return new RuleBuilder().allowAll().build();
-////      }
-////    }
-
     return new RuleBuilder().allowAll().build();
   }
 
@@ -108,7 +98,7 @@ public class PatientRules extends RuleBase {
     return false;
   }
 
-  private IIdType GetUserOrganization()
+  protected IIdType GetUserOrganization()
   {
     return this.getAllowedOrganization();
   }

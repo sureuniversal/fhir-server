@@ -48,7 +48,6 @@ public class ObservationRules extends PatientRules {
 
   // sec rules updates
   // override handleUpdate and give it a deny all for an observation
-
   private List<String> GetAllowedUsersToAddAnObs()
   {
     List<IIdType> userIds = new ArrayList<>();
