@@ -44,6 +44,6 @@ public class MediaRule extends PatientRules {
   @Override
   public List<IAuthRule> handleUpdate()
   {
-    return new RuleBuilder().denyAll("Update not allowed!").build();
+    return handlePost();
   }
 }
