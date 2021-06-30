@@ -23,7 +23,7 @@ public class Search {
   static final String server;
 
   static {
-    server = HapiProperties.getServerAddress();
+    server = System.getenv("INTERNAL_SERVER");
   }
 
   public static IGenericClient getClient() {
