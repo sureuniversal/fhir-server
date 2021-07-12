@@ -65,6 +65,10 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         return new RuleBuilder()
           .denyAll("invalid token")
           .build();
+      } else if(tokenRecord.getId() == null){
+        return new RuleBuilder()
+          .denyAll(tokenRecord.getStatus())
+          .build();
       }
 
       if (tokenRecord.getStatus() != null && tokenRecord.getStatus().equalsIgnoreCase("closed")) {
