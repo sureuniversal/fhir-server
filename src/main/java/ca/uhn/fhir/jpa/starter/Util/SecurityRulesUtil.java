@@ -52,6 +52,7 @@ public class SecurityRulesUtil {
       case "PractitionerRole": return new PractitionerRoleRules();
       case "Organization": return new OrganizationRules();
       case "DiagnosticReport": return new DiagnosticReportRules();
+      case "Media": return new MediaRule();
       default:
         throw new Exception("Method does not exist");
     }

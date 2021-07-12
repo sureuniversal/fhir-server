@@ -1,22 +1,27 @@
 package ca.uhn.fhir.jpa.starter.authorization.rules;
 
 import ca.uhn.fhir.jpa.starter.Models.UserType;
+import ca.uhn.fhir.jpa.starter.Util.CareTeamSearch;
 import ca.uhn.fhir.jpa.starter.Util.Search;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Patient;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class PatientRules extends RuleBase {
+
   public PatientRules() {
     this.denyMessage = "Patient Rule";
     this.type = Patient.class;
   }
-
 
   // sec rules updates
   // We need to also check if the request has an organization parameter ex: Patient?organization=48b07dfb-1b3d-4232-b74c-5efec04ee3d7
@@ -24,33 +29,13 @@ public class PatientRules extends RuleBase {
   // then we should allow the request if it has that parameter as well
   @Override
   public List<IAuthRule> handleGet() {
-    var userIds = this.setupAllowedUsersList();
+   var allowed = this.isOperationAllowed();
+   if(allowed)
+   {
+     return new RuleBuilder().allowAll().build();
+   }
 
-    var existCounter = 0;
-    for (var allowedId : this.idsParamValues) {
-      if(userIds.contains(allowedId))
-      {
-        existCounter++;
-      }
-    }
-
-    if (existCounter == this.idsParamValues.size())
-    {
-      var allow = new RuleBuilder().allow().read().allResources().withAnyId();
-
-      List<IAuthRule> patientRule = allow.build();
-      List<IAuthRule> commonRules = commonRulesGet();
-      List<IAuthRule> denyRule = denyRule();
-
-      List<IAuthRule> ruleList = new ArrayList<>();
-      ruleList.addAll(patientRule);
-      ruleList.addAll(commonRules);
-      ruleList.addAll(denyRule);
-
-      return ruleList;
-    }
-
-    return denyRule();
+   return new RuleBuilder().denyAll("Cant add Resource").build();
   }
 
   // sec rules updates
@@ -59,7 +44,17 @@ public class PatientRules extends RuleBase {
   // see <ref> Search.getPractitionerOrganization </ref> for Practitioner
   @Override
   public List<IAuthRule> handlePost() {
-    return new RuleBuilder().allowAll().build();
+    IIdType userOrganization = this.GetUserOrganization();
+    if (this.requestResource != null && userOrganization != null)
+    {
+      Patient resource = (Patient) this.requestResource;
+      if (resource.getManagingOrganization() != null && resource.getManagingOrganization().getReferenceElement().getIdPart().compareTo(userOrganization.getIdPart()) == 0)
+      {
+        return new RuleBuilder().allowAll().build();
+      }
+    }
+
+    return new RuleBuilder().denyAll("The added patient organization is not equal to the user organization").build();
   }
 
   // sec rules updates
@@ -71,22 +66,69 @@ public class PatientRules extends RuleBase {
     return new RuleBuilder().allowAll().build();
   }
 
-  private List<String> setupAllowedUsersList()
+  protected boolean isOperationAllowed()
+  {
+    var userIds = this.setupAllowedUserIdList();
+    IIdType allowedOrganization = null;
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.patient)
+    {
+      allowedOrganization = this.GetUserOrganization();
+    }
+
+    var existCounter = 0;
+    for (var allowedId : this.idsParamValues) {
+      // allowedId.contains(e) is a security concern
+      var filtered = userIds.stream().filter(e -> e != null && allowedId.contains(e));
+      if(filtered.count() > 0)
+      {
+        existCounter++;
+      }
+
+      if (allowedOrganization != null && allowedOrganization.hasIdPart() && allowedId.contains(allowedOrganization.getIdPart()))
+      {
+        existCounter++;
+      }
+    }
+
+    if (existCounter >= this.idsParamValues.size())
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  protected IIdType GetUserOrganization()
+  {
+    return this.getAllowedOrganization();
+  }
+
+  private List<String> setupAllowedUserIdList()
   {
     List<IIdType> userIds = new ArrayList<>();
-    var careTeamUsers = handleCareTeam();
-    var organizationUsers = Search.getAllInOrganization(getAllowedOrganization().getIdPart());
-
-    userIds.addAll(careTeamUsers);
-    userIds.addAll(organizationUsers);
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.patient)
+    {
+      var organizationUsers = Search.getAllPatientsInOrganization(getAllowedOrganization().getIdPart());
+      userIds.addAll(organizationUsers);
+    }
 
     if (this.userType == UserType.patient)
     {
+      var careTeams =
+        CareTeamSearch
+        .getAllowedCareTeamAsSubject(this.userId)
+          .stream().map(IIdType::getIdPart).collect(Collectors.toList());
+
+      userIds.addAll(CareTeamSearch.getAllUsersInCareTeams(careTeams));
       userIds.add(RuleBase.toIdType(this.userId, "Patient"));
+    }
+
+    if (this.userType == UserType.practitioner)
+    {
+      userIds.addAll(CareTeamSearch.getSubjectsOfCareTeamsSearchingByParticipant(this.userId));
     }
 
     var idsList = userIds.stream().map(e -> e.getIdPart()).collect(Collectors.toList());
     return idsList;
   }
-
 }

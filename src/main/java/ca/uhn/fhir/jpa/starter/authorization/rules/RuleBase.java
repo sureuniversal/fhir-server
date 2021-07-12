@@ -5,6 +5,7 @@ import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -19,10 +20,18 @@ public abstract class RuleBase {
   protected String denyMessage;
   protected String userId;
   protected UserType userType;
+  protected IBaseResource requestResource;
+  protected IIdType requestResourceId;
 
   public RequestTypeEnum requestType;
   protected List<String> idsParamValues;
-  private String[] userIdsParamName = new String[]{ "subject", "participant", "_has:PractitionerRole:practitioner:organization" };
+  private String[] allowedRequestParams = new String[]{
+    "subject",
+    "participant",
+    "_has:PractitionerRole:practitioner:organization",
+    "organization",
+    "_has:CareTeam:patient:subject",
+    "_has:CareTeam:patient:participant"};
 
   public Class<? extends IBaseResource> type;
 
@@ -61,21 +70,32 @@ public abstract class RuleBase {
 
   protected IIdType getAllowedOrganization()
   {
-    if (this.userType == UserType.patient)
+    IIdType userOrganization;
+    if (this.userType == UserType.organizationAdmin || this.userType == UserType.practitioner)
     {
-      return RuleBase.toIdType(this.userId, "Organization");
+      userOrganization = Search.getPractitionerOrganization(this.userId);
+    }
+    else
+    {
+      userOrganization = Search.getPatientOrganization(this.userId);
     }
 
-    return Search.getPractitionerOrganization(this.userId);
+    if (userOrganization == null)
+    {
+      throw InvalidRequestException.newInstance(400, "User Has no organization");
+    }
+
+    return userOrganization;
   }
 
-  public void setUserIdsRequested(RequestDetails theRequestDetails)
+  // This might has a security hole in same id for different resources
+  public void setRequestParams(RequestDetails theRequestDetails)
   {
     var params = theRequestDetails.getParameters();
     this.idsParamValues = new ArrayList<>();
     if (params != null && !params.isEmpty())
     {
-      for(var name : this.userIdsParamName)
+      for(var name : this.allowedRequestParams)
       {
         var value = params.get(name);
         if (value != null)
@@ -88,12 +108,8 @@ public abstract class RuleBase {
     }
     else if (theRequestDetails.getId() != null)
     {
-      try {
-        var id = theRequestDetails.getId();
-        this.idsParamValues.add(id.getIdPart());
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      var id = theRequestDetails.getId();
+      this.idsParamValues.add(id.getIdPart());
     }
   }
 
@@ -127,5 +143,15 @@ public abstract class RuleBase {
     }
 
     return userIds;
+  }
+
+  public void SetRequestResource(IBaseResource resource)
+  {
+    this.requestResource = resource;
+  }
+
+  public void SetRequestId(RequestDetails theRequestDetails)
+  {
+    this.requestResourceId = theRequestDetails.getId();
   }
 }

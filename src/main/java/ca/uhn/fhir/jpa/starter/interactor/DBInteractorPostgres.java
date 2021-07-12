@@ -44,7 +44,7 @@ public class DBInteractorPostgres implements IDBInteractor {
         connector.connect();
       }
       PreparedStatement postgresStm = postgresCon.prepareStatement(
-        "select u.id, u.ispractitioner, o.accesstoken, o.issuedat, o.expiresin, o.scopes " +
+        "select u.id, u.ispractitioner, u.status, o.accesstoken, o.issuedat, o.expiresin, o.scopes " +
           "from public.oauthaccesstoken o " +
           "join public.user u on o.uid = u.id " +
           "where o.accesstoken = '" + token + "';"
@@ -57,8 +57,9 @@ public class DBInteractorPostgres implements IDBInteractor {
       long issued = -1;
       long expire = -1;
       String[] scopes = resultSet.getString("scopes").replaceAll("[\\]\\[\"]","").split(",");
+      String status = resultSet.getString("status");
       postgresStm.close();
-      return new TokenRecord(userId, token, isPractitioner, issued, expire, scopes);
+      return new TokenRecord(userId, token, isPractitioner, issued, expire, scopes, status);
     } catch (SQLException e) {
       ourLog.error("postgreSQL error:", e);
       if(e.getCause().getClass() == java.net.SocketException.class){
