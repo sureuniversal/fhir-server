@@ -5,11 +5,17 @@ import ca.uhn.fhir.jpa.starter.Util.Search;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.r4.model.Organization;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrganizationRules extends RuleBase{
+
+  public OrganizationRules() {
+    this.type = Organization.class;
+    this.denyMessage = "Organization Rule";
+  }
 
   @Override
   public List<IAuthRule> handleGet() {
@@ -31,7 +37,7 @@ public class OrganizationRules extends RuleBase{
   @Override
   public List<IAuthRule> handlePost() {
     List<IAuthRule> OrganizationRule =
-      new RuleBuilder().allow().write().allResources().inCompartment("Organization",  RuleBase.toIdType(this.userId, "Organization")).build();
+      new RuleBuilder().allow().write().allResources().inCompartment("Organization",  this.getAllowedOrganization()).build();
 
     List<IAuthRule> ruleList = new ArrayList<>();
     List<IAuthRule> commonRules = commonRulesPost();
@@ -49,14 +55,4 @@ public class OrganizationRules extends RuleBase{
     return handlePost();
   }
 
-  private IIdType getAllowedOrganization()
-  {
-    if (this.userType == UserType.patient)
-    {
-      return RuleBase.toIdType(this.userId, "Organization");
-    }
-
-    var org = Search.getPractitionerOrganization(this.userId);
-    return org;
-  }
 }

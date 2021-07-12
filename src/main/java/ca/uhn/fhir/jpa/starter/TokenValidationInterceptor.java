@@ -29,14 +29,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
     cacheTimer.schedule(new TimerTask() {
                           @Override
                           public void run() {
-       try {
-          cleanRuleCache();
-          cleanTokenCache();
-        } catch (Exception e) {
-          org.slf4j.LoggerFactory.getLogger("cacheTimer").error("cacheTimer:", e);
-        }
-        }
-        },
+                            try {
+                              cleanRuleCache();
+                              cleanTokenCache();
+                            } catch (Exception e) {
+                              org.slf4j.LoggerFactory.getLogger("cacheTimer").error("cacheTimer:", e);
+                            }
+                          }
+                        },
       DBUtils.getCacheTTL(),
       DBUtils.getCacheTTL());
   }
@@ -67,15 +67,31 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
           .build();
       }
 
+      if (tokenRecord.getStatus() != null && tokenRecord.getStatus().equalsIgnoreCase("closed")) {
+        return new RuleBuilder()
+          .denyAll("status: closed")
+          .build();
+      }
+
       if(tokenRecord.is_practitioner()){
-        tokenRecord.setType(Search.getPractitionerType(tokenRecord.getId()));
+        UserType userType = Search.getPractitionerType(tokenRecord.getId());
+        if (userType == null)
+        {
+          return new RuleBuilder()
+            .denyAll("Practitioner has no Role!")
+            .build();
+        }
+
+        tokenRecord.setType(userType);
+      }
+      else {
+        tokenRecord.setType(UserType.patient);
       }
 
       tokenCache.put(token, tokenRecord);
     }
 
     boolean isAdmin = tokenRecord.isAdmin();
-    boolean isPractitioner = tokenRecord.is_practitioner();
     String userId = tokenRecord.getId();
     String[] scopes = tokenRecord.getScopes();
 
@@ -110,13 +126,14 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
       String cacheKey = CacheUtil.getCacheEntryForRequest(theRequestDetails, rule, authHeader);
       AuthRulesWrapper cachedRule = getCachedRuleIfExists(cacheKey);
       if (cachedRule != null)
-    {
-      return cachedRule.rules;
-    }
+      {
+        return cachedRule.rules;
+      }
 
-      UserType userType = isPractitioner ? UserType.practitioner : UserType.patient;
+      UserType userType = tokenRecord.getType();
       rule.setupUser(userId, userType);
-      rule.setUserIdsRequested(theRequestDetails);
+      rule.setRequestParams(theRequestDetails);
+      this.setRequestResource(theRequestDetails, rule);
 
       List<IAuthRule> result = HandleRule(rule,scopes);
       ruleCache.put(cacheKey, new AuthRulesWrapper(result));
@@ -148,15 +165,19 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
         return rule.handleUpdate();
       case DELETE:
       case POST:
-//        if(Arrays.stream(scopes).noneMatch(s -> s.equals("w:resources:*")))
-//        {
-//          return new RuleBuilder()
-//            .denyAll("Readonly can't post")
-//            .build();
-//        }
         return rule.handlePost();
       default:
         throw new IllegalStateException("Operation Unknown");
+    }
+  }
+
+  private void setRequestResource(RequestDetails requestDetails, RuleBase rule)
+  {
+    switch (requestDetails.getRequestType()) {
+      case PUT: rule.SetRequestId(requestDetails);
+      case PATCH:
+      case DELETE:
+      case POST: rule.SetRequestResource(requestDetails.getResource());
     }
   }
 

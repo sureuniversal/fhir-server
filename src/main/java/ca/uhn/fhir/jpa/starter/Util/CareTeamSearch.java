@@ -34,6 +34,20 @@ public class CareTeamSearch extends Search{
     return retVal;
   }
 
+  public static List<IIdType> getSubjectsOfCareTeamsSearchingByParticipant(String id){
+    List<IIdType> retVal = new ArrayList<>();
+    Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
+      .where(new ReferenceClientParam("participant").hasId(id))
+      .execute();
+
+    for (var item : careTeamBundle.getEntry()) {
+      CareTeam careTeam = (CareTeam) item.getResource();
+      retVal.add(careTeam.getSubject().getReferenceElement());
+    }
+
+    return retVal;
+  }
+
   public static List<IIdType> getAllowedCareTeamAsSubject(String id){
     List<IIdType> retVal = new ArrayList<>();
     Bundle careTeamBundle = (Bundle) client.search().forResource(CareTeam.class)
