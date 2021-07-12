@@ -22,7 +22,9 @@ public class DBInteractorLoopback implements IDBInteractor{
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestMethod("GET");
       if(con.getResponseCode() == 401){
-        return null;
+        byte [] buff = new byte[300];
+        con.getErrorStream().read(buff,0,300);
+        return new TokenRecord(null,null,false,0,0,null,new String(buff).trim());
       }
 
       JSONTokener tokener = new JSONTokener(con.getInputStream());
