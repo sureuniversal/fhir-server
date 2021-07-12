@@ -1,14 +1,10 @@
 package ca.uhn.fhir.jpa.starter.interactor;
 
 import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
-import com.google.common.io.CharStreams;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -25,6 +21,9 @@ public class DBInteractorLoopback implements IDBInteractor{
       URL url = new URL(loopbackUrl+"getUserInfoByAccessToken?access_token="+token);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestMethod("GET");
+      if(con.getResponseCode() == 401){
+        return null;
+      }
 
       JSONTokener tokener = new JSONTokener(con.getInputStream());
       JSONObject json = new JSONObject(tokener);
