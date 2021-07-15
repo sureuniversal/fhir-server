@@ -1,6 +1,7 @@
 package ca.uhn.fhir.jpa.starter.db;
 
 import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorLoopback;
 import ca.uhn.fhir.jpa.starter.db.interactor.DBInteractorPostgres;
 import ca.uhn.fhir.jpa.starter.db.interactor.IDBInteractor;
 import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
@@ -12,10 +13,14 @@ public class Utils {
   private final static long cacheTtl;
 
   static {
-    String connectionString = HapiProperties.getTokenDataSourceUrl();
-    String postgresUser = HapiProperties.getDataSourceUsername();
-    String postgresPass = HapiProperties.getDataSourcePassword();
-    interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
+    if(System.getenv("LOOPBACK_URL")!=null){
+      interactor = new DBInteractorLoopback(System.getenv("LOOPBACK_URL"));
+    } else {
+      String connectionString = HapiProperties.getTokenDataSourceUrl();
+      String postgresUser = HapiProperties.getDataSourceUsername();
+      String postgresPass = HapiProperties.getDataSourcePassword();
+      interactor = new DBInteractorPostgres(connectionString, postgresUser, postgresPass);
+    }
 
     cacheTtl = HapiProperties.getCacheTtl(240000);
   }

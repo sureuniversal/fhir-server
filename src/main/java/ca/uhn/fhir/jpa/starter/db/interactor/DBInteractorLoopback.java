@@ -1,6 +1,6 @@
-package ca.uhn.fhir.jpa.starter.interactor;
+package ca.uhn.fhir.jpa.starter.db.interactor;
 
-import ca.uhn.fhir.jpa.starter.Models.TokenRecord;
+import ca.uhn.fhir.jpa.starter.db.token.TokenRecord;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
