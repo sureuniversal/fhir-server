@@ -1,6 +1,7 @@
 package ca.uhn.fhir.jpa.starter;
 
 import ca.uhn.fhir.interceptor.api.Interceptor;
+import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.jpa.starter.authorization.rules.RuleImplPatient;
 import ca.uhn.fhir.jpa.starter.db.Search;
 import ca.uhn.fhir.jpa.starter.db.Utils;
@@ -87,7 +88,24 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       boolean isPractitioner = tokenRecord.is_practitioner();
 
-      if(isPractitioner && Search.isPractitionerAdmin(bearerId,authHeader)){
+      UserType myType;
+
+      if(tokenRecord.is_practitioner()){
+        UserType userType = Search.getPractitionerType(new IdType("Practitioner",tokenRecord.getId()));
+        if (userType == null)
+        {
+          return new RuleBuilder()
+            .denyAll("Practitioner has no Role!")
+            .build();
+        }
+
+        myType = userType;
+      }
+      else {
+        myType = UserType.patient;
+      }
+
+      if(isPractitioner && tokenRecord.getType() == UserType.superAdmin){
         return new RuleBuilder()
           .allowAll("Practitioner is admin")
           .build();
@@ -95,7 +113,7 @@ public class TokenValidationInterceptor extends AuthorizationInterceptor {
 
       IIdType myId =  new IdType((isPractitioner)?"Practitioner":"Patient", bearerId);
 
-      RuleImplPatient ruleImplPatient= new RuleImplPatient("",myId,isPractitioner);
+      RuleImplPatient ruleImplPatient= new RuleImplPatient("",myId,isPractitioner,myType);
 
       List<IAuthRule> rule = new RuleBuilder()
         .allow().metadata().andThen()

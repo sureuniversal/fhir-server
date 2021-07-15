@@ -2,13 +2,12 @@ package ca.uhn.fhir.jpa.starter.db;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.starter.HapiProperties;
+import ca.uhn.fhir.jpa.starter.Models.UserType;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceGoneException;
-import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.auth.PolicyEnum;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -62,15 +61,24 @@ public class Search {
     return patients;
   }
 
-  public static boolean isPractitionerAdmin(String practitioner, String authHeader) {
-    Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
-      .where(new ReferenceClientParam("practitioner").hasId(practitioner))
-      .withAdditionalHeader("Authorization", authHeader)
-      .execute();
-    for (Bundle.BundleEntryComponent itm : role.getEntry()) {
-      return ((PractitionerRole) itm.getResource()).getIdentifier().get(0).getValue().equals("admin");
+  public static UserType getPractitionerType(IIdType practitioner){
+    PractitionerRole role = getPractitionerRole(practitioner);
+
+    if (role == null)
+    {
+      return null;
     }
-    return false;
+
+    if (!role.hasOrganization())
+    {
+      return UserType.superAdmin;
+    }
+
+    if (role.getCode().stream().anyMatch(c-> c.hasCoding("http://snomed.info/sct","56542007"))){
+      return UserType.organizationAdmin;
+    }
+
+    return UserType.practitioner;
   }
 
   public static List<String> getBundleTypes(RequestDetails theRequestDetails) {
@@ -94,6 +102,19 @@ public class Search {
     return client.read().resource(Patient.class).withId(id).execute();
   }
 
+  public static PractitionerRole getPractitionerRole(IIdType practitioner){
+    Bundle role = (Bundle) client.search().forResource(PractitionerRole.class)
+      .where(new ReferenceClientParam("practitioner").hasId(practitioner))
+      .execute();
+
+    if (role.getEntry().isEmpty())
+    {
+      return null;
+    }
+
+    return (PractitionerRole) role.getEntry().get(0).getResource();
+  }
+
   public static Device getDevice(IIdType id){
     return client.read().resource(Device.class).withId(id).execute();
   }
@@ -113,6 +134,10 @@ public class Search {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public static boolean isInOrganization(IIdType id,IIdType organization){
+    return getOrganization(id).equals(organization);
   }
 
   public static boolean isInCareTeam(IIdType id1,IIdType id2){
@@ -139,6 +164,23 @@ public class Search {
       return true;
     } catch (ResourceGoneException e) {
       return false;
+    }
+  }
+
+  public static IIdType getOrganization(IIdType id) {
+    IIdType org = null;
+    if(id.getResourceType().equals("Patient")){
+      Patient patient = getPatient(id);
+      org = patient.getManagingOrganization().getReferenceElement();
+    }
+    else if(id.getResourceType().equals("Practitioner")){
+      PractitionerRole role = getPractitionerRole(id);
+      org = role.getOrganization().getReferenceElement();
+    }
+    if(org == null) {
+      return new IdType("Organization", id.getIdPart());
+    } else {
+      return org;
     }
   }
 }

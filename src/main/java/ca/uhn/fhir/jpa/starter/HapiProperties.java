@@ -255,8 +255,8 @@ public class HapiProperties {
   }
 
   public static String getServerAddress() {
-    if(System.getenv("SERVER_ADDRESS") != null){
-      return System.getenv("SERVER_ADDRESS");
+    if(System.getenv("INTERNAL_ADDRESS") != null){
+      return System.getenv("INTERNAL_ADDRESS");
     }
     return HapiProperties.getProperty(SERVER_ADDRESS);
   }
