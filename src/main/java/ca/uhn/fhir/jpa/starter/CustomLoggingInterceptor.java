@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -51,43 +52,23 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class CustomLoggingInterceptor {
   private static final Logger ourLog = LoggerFactory.getLogger(LoggingInterceptor.class);
 
-  private String myErrorMessageFormat = "ERROR - ${operationType} - ${idOrResourceName}";
-  private boolean myLogExceptions = true;
+  private static String RequestBeginMessageFormat = System.getenv("LOGGER_FORMAT_REQUEST_BEGIN");
+  private static String ErrorRequestMessageFormat = System.getenv("LOGGER_FORMAT_ERROR");
+  private static String RequestCompletedNormallyMessageFormat = System.getenv("LOGGER_FORMAT_REQUEST_COMPLETED_NORMALLY");
+
   private Logger myLogger = ourLog;
-  private String myMessageFormat = "${operationType} - ${idOrResourceName}";
-  private String myIncomingFormat = "${operationType} - ${idOrResourceName} - ${requestId}";
-
-
-  /**
-   * Get the log message format to be used when logging exceptions
-   */
-  public String getErrorMessageFormat() {
-    return myErrorMessageFormat;
-  }
-
-  @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
-  public boolean handleException(RequestDetails theRequestDetails, BaseServerResponseException theException, HttpServletRequest theServletRequest, HttpServletResponse theServletResponse) {
-    if (myLogExceptions) {
-      // Perform any string substitutions from the message format
-      StringLookup lookup = new MyLookup(theServletRequest, theException, theRequestDetails);
-      StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
-
-      // Actually log the line
-      String line = subs.replace(myErrorMessageFormat);
-      myLogger.error(line);
-
-    }
-    return true;
-  }
 
   @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
   public void requestPreHandled(ServletRequestDetails theRequestDetails){
+    String reqId = UUID.randomUUID().toString();
+    theRequestDetails.setRequestId(reqId);
+
     // Perform any string substitutions from the message format
     StringLookup lookup = new MyLookup(theRequestDetails.getServletRequest(), theRequestDetails);
     StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
 
     // Actually log the line
-    String line = subs.replace(myIncomingFormat);
+    String line = subs.replace(RequestBeginMessageFormat);
     myLogger.info(line);
   }
 
@@ -98,31 +79,23 @@ public class CustomLoggingInterceptor {
     StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
 
     // Actually log the line
-    String line = subs.replace(myMessageFormat);
+    String line = subs.replace(RequestCompletedNormallyMessageFormat);
     myLogger.info(line);
   }
 
-  /**
-   * Should exceptions be logged by this logger
-   */
-  public boolean isLogExceptions() {
-    return myLogExceptions;
+  @Hook(Pointcut.SERVER_HANDLE_EXCEPTION)
+  public boolean handleException(RequestDetails theRequestDetails, BaseServerResponseException theException, HttpServletRequest theServletRequest, HttpServletResponse theServletResponse) {
+    // Perform any string substitutions from the message format
+    StringLookup lookup = new MyLookup(theServletRequest, theException, theRequestDetails);
+    StringSubstitutor subs = new StringSubstitutor(lookup, "${", "}", '\\');
+
+    // Actually log the line
+    String line = subs.replace(ErrorRequestMessageFormat);
+    myLogger.error(line);
+
+    return true;
   }
 
-  /**
-   * Set the log message format to be used when logging exceptions
-   */
-  public void setErrorMessageFormat(String theErrorMessageFormat) {
-    Validate.notBlank(theErrorMessageFormat, "Message format can not be null/empty");
-    myErrorMessageFormat = theErrorMessageFormat;
-  }
-
-  /**
-   * Should exceptions be logged by this logger
-   */
-  public void setLogExceptions(boolean theLogExceptions) {
-    myLogExceptions = theLogExceptions;
-  }
 
   public void setLogger(Logger theLogger) {
     Validate.notNull(theLogger, "Logger can not be null");
@@ -133,24 +106,6 @@ public class CustomLoggingInterceptor {
     Validate.notBlank(theLoggerName, "Logger name can not be null/empty");
     myLogger = LoggerFactory.getLogger(theLoggerName);
 
-  }
-
-  /**
-   * Sets the message format itself. See the {@link LoggingInterceptor class documentation} for information on the
-   * format
-   */
-  public void setMessageFormat(String theMessageFormat) {
-    Validate.notBlank(theMessageFormat, "Message format can not be null/empty");
-    myMessageFormat = theMessageFormat;
-  }
-
-  /**
-   * Sets the incoming message format itself. See the {@link LoggingInterceptor class documentation} for information on the
-   * format
-   */
-  public void setIncomingFormat(String theIncomingFormat) {
-    Validate.notBlank(theIncomingFormat, "Message format can not be null/empty");
-    myIncomingFormat = theIncomingFormat;
   }
 
   private static final class MyLookup implements StringLookup {

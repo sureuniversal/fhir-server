@@ -219,9 +219,6 @@ public class BaseJpaRestfulServer extends RestfulServer {
      */
     CustomLoggingInterceptor loggingInterceptor = new CustomLoggingInterceptor();
     loggingInterceptor.setLoggerName(appProperties.getLogger().getName());
-    loggingInterceptor.setMessageFormat(appProperties.getLogger().getFormat());
-    loggingInterceptor.setErrorMessageFormat(appProperties.getLogger().getError_format());
-    loggingInterceptor.setLogExceptions(appProperties.getLogger().getLog_exceptions());
     this.registerInterceptor(loggingInterceptor);
 
     /*
